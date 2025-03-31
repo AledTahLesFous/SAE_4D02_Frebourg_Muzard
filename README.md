@@ -6,6 +6,7 @@
 - formulaire pour trouver
 - localstorage
 - api wikipedia photos
+- lier bdd CHECK
 
 - fonctionalites:
 	- three js

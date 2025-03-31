@@ -4,6 +4,9 @@ const express = require("express");
 const myDB = require("./src/sgbd/config.js");
 require("./src/sgbd/models.js");
 
+const routerActors = require("./src/routes/player.js");
+const movieRouter = require("./src/routes/movie.js"); // Assuming the file is named `movie.js`
+
 
 const app = express();
 
@@ -13,6 +16,8 @@ app.get("/", function (req, res) {
   res.send("Hello World");
 });
 
+app.use("/players", routerActors);
+app.use("/movies", movieRouter); // Use the movie router for routes under "/movies"
 
 
 const PORT = process.env.PORT || 3000;
@@ -23,12 +28,11 @@ myDB
     console.log("Database synchronized");
 
     app.listen(PORT, () => {
-      console.log(`Server run on http://localhost:${PORT}`);
+      console.log(`Server running on http://localhost:${PORT}`);
     });
   })
   .catch((error) => {
     console.error("Failed to synchronize database:", error);
   });
 
-
-  module.exports = app;
+module.exports = app;

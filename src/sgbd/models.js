@@ -1,45 +1,11 @@
-// src/sgbd/models.js
 const Sequelize = require("sequelize");
 const myDB = require("./config");
 
-const Player = myDB.define(
-  "player",
+const Actors = myDB.define(
+  "actors",
   {
     id: {
-      type: Sequelize.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    first: {
-      type: Sequelize.STRING,
-      allowNull: false,
-    },
-    last: {
-      type: Sequelize.STRING,
-      allowNull: false,
-    },
-    country: {
-      type: Sequelize.STRING,
-      allowNull: false,
-    },
-    birthdate: {
-      type: Sequelize.DATE,
-      allowNull: false,
-    },
-    hand: {
-      type: Sequelize.STRING,
-      allowNull: false,
-    },
-  },
-  { timestamps: false }
-);
-
-const Championship = myDB.define(
-  "championship",
-  {
-    id: {
-      type: Sequelize.INTEGER,
-      autoIncrement: true,
+      type: Sequelize.STRING, // ID sous forme de chaîne
       primaryKey: true,
     },
     name: {
@@ -50,38 +16,14 @@ const Championship = myDB.define(
   { timestamps: false }
 );
 
-const Play = myDB.define(
-  "play",
+const Genres = myDB.define(
+  "genres",
   {
-    player1_id: {
-      type: Sequelize.INTEGER,
+    id: {
+      type: Sequelize.STRING, // ID sous forme de chaîne
       primaryKey: true,
-      references: {
-        model: Player,
-        key: "id",
-      },
     },
-    player2_id: {
-      type: Sequelize.INTEGER,
-      primaryKey: true,
-      references: {
-        model: Player,
-        key: "id",
-      },
-    },
-    championship_id: {
-      type: Sequelize.INTEGER,
-      primaryKey: true,
-      references: {
-        model: Championship,
-        key: "id",
-      },
-    },
-    year: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
-    score: {
+    genre: {
       type: Sequelize.STRING,
       allowNull: false,
     },
@@ -89,24 +31,16 @@ const Play = myDB.define(
   { timestamps: false }
 );
 
-const Win = myDB.define(
-  "win",
+const Movies = myDB.define(
+  "movies",
   {
-    championship_id: {
-      type: Sequelize.INTEGER,
+    id: {
+      type: Sequelize.STRING, // ID sous forme de chaîne
       primaryKey: true,
-      references: {
-        model: Championship,
-        key: "id",
-      },
     },
-    winner_id: {
-      type: Sequelize.INTEGER,
-      primaryKey: true,
-      references: {
-        model: Player,
-        key: "id",
-      },
+    title: {
+      type: Sequelize.STRING,
+      allowNull: false,
     },
     year: {
       type: Sequelize.INTEGER,
@@ -116,4 +50,56 @@ const Win = myDB.define(
   { timestamps: false }
 );
 
-module.exports = { Player, Championship, Play, Win };
+const MoviesActor = myDB.define(
+  "moviesactor",
+  {
+    id_movie: {
+      type: Sequelize.STRING, // ID sous forme de chaîne
+      references: {
+        model: Movies, // Foreign key to Movies
+        key: "id",
+      },
+      primaryKey: true,
+    },
+    id_actor: {
+      type: Sequelize.STRING, // ID sous forme de chaîne
+      references: {
+        model: Actors, // Foreign key to Actors
+        key: "id",
+      },
+      allowNull: false,
+    },
+  },
+  { timestamps: false }
+);
+
+const MoviesGenre = myDB.define(
+  "moviesgenres",
+  {
+    id_movie: {
+      type: Sequelize.STRING, // ID sous forme de chaîne
+      references: {
+        model: Movies, // Foreign key to Movies
+        key: "id",
+      },
+      primaryKey: true,
+    },
+    id_genre: {
+      type: Sequelize.STRING, // ID sous forme de chaîne
+      references: {
+        model: Genres, // Foreign key to Genres
+        key: "id",
+      },
+      allowNull: false,
+    },
+  },
+  { timestamps: false }
+);
+
+Movies.belongsToMany(Actors, { through: MoviesActor, foreignKey: "id_movie" });
+Actors.belongsToMany(Movies, { through: MoviesActor, foreignKey: "id_actor" });
+
+Movies.belongsToMany(Genres, { through: MoviesGenre, foreignKey: "id_movie" });
+Genres.belongsToMany(Movies, { through: MoviesGenre, foreignKey: "id_genre" });
+
+module.exports = { Actors, Movies, MoviesActor, MoviesGenre, Genres };
