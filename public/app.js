@@ -20,13 +20,10 @@ function fetchData(url) {
     fetch(url)
     .then(response => response.json())
     .then(data => {
-        console.log("Données reçues :", data); // Regarde la structure ici
         updateGraph(data);
     })
     .catch(error => console.error("Erreur lors du chargement des données :", error));
-
 }
-
 
 function updateGraph(actorData) {
     if (!actorData || !actorData.movies) {
@@ -34,7 +31,7 @@ function updateGraph(actorData) {
         return;
     }
 
-    const movies = actorData.movies; // Utilise "movies" au lieu de "Movies"
+    const movies = actorData.movies;
 
     nodes = [{ id: `Actor: ${actorData.id}`, name: actorData.name, type: "actor" }];
     links = [];
@@ -46,7 +43,6 @@ function updateGraph(actorData) {
 
     renderGraph();
 }
-
 
 function renderGraph() {
     svg.selectAll("*").remove();
@@ -62,7 +58,8 @@ function renderGraph() {
         .enter().append("circle")
         .attr("class", "node")
         .attr("r", d => (d.type === "actor" ? 10 : 6))
-        .attr("fill", d => (d.type === "actor" ? "red" : "blue"));
+        .attr("fill", d => (d.type === "actor" ? "pink" : "magenta"))
+        .on("click", handleClick); // Ajout de l'événement click
 
     const text = svg.selectAll(".text")
         .data(nodes)
@@ -87,4 +84,23 @@ function renderGraph() {
 
     simulation.force("link").links(links);
     simulation.alpha(1).restart();
+}
+
+// 🟢 Fonction pour ajouter un cercle lorsqu'on clique sur un nœud
+function handleClick(event, d) {
+    fetchData(`/api/movies/${d.id}/actors`)
+    if(d.type == 'movie') {
+        const newNode = {
+            id: `NewNode_${nodes.length}`,
+            name: "New Node",   
+            type: "extra"
+        };
+        nodes.push(newNode);
+        links.push({ source: d.id, target: newNode.id });
+    
+        renderGraph(); // Rafraîchir le graphe avec le nouveau nœud
+    }
+
+    
+ 
 }
