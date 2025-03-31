@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Graph: Films and Actors</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+      }
+      html, body {
+        height: 100%;
+      }
+      main {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // Créer une scène Three.js
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.AmbientLight(0x404040);
+      scene.add(light);
+
+      const geometry = new THREE.SphereGeometry(1, 32, 32);
+      const material = new THREE.MeshBasicMaterial({ color: 0x0077ff });
+      const sphere = new THREE.Mesh(geometry, material);
+      scene.add(sphere);
+
+      camera.position.z = 20;
+
+      let movieCube = null;
+      let actorCubes = [];
+
+      // Fonction pour charger les acteurs d'un film
+      async function loadActorsForMovie(movieId) {
+        try {
+          const response = await fetch(`/api/movies/${movieId}/actors`);
+          const actors = await response.json();
+
+          // Ajouter un cube pour chaque acteur lié à ce film
+          actorCubes.forEach(cube => scene.remove(cube)); // Enlever les anciens cubes d'acteurs
+
+          actorCubes = []; // Réinitialiser le tableau des cubes
+
+          actors.forEach((actor, i) => {
+            const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const cubeMaterial = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+            const actorCube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+            // Positionner les cubes d'acteurs autour du cube du film
+            actorCube.position.set(i * 3 - 5, 5, 0);
+            scene.add(actorCube);
+            actorCubes.push(actorCube);
+          });
+        } catch (error) {
+          console.error("Erreur lors du chargement des acteurs:", error);
+        }
+      }
+
+      // Fonction de gestion du clic sur le cube du film
+      function onMovieCubeClick() {
+        const movieId = "movie_1"; // Exemple d'ID de film, tu peux le changer dynamiquement
+        loadActorsForMovie(movieId);
+      }
+
+      // Créer un cube pour un film
+      movieCube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+      scene.add(movieCube);
+
+      movieCube.position.set(0, 0, 0); // Positionner le cube du film au centre
+
+      // Ajouter un détecteur de clic pour le cube du film
+      window.addEventListener('click', (event) => {
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Calculer les coordonnées normalisées de la souris
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // Créer un rayon à partir de la position de la souris dans la scène 3D
+        raycaster.update = () => {};  // Pas besoin d'utiliser raycaster.update()
+
+        // Créer un rayon à partir des coordonnées de la souris
+        raycaster.setFromCamera(mouse, camera);
+
+        // Vérifier si le rayon intersecte le cube du film
+        const intersects = raycaster.intersectObject(movieCube);
+
+        if (intersects.length > 0) {
+          onMovieCubeClick(); // Charger les acteurs si le film est cliqué
+        }
+      });
+
+      // Fonction d'animation
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+      animate();
+    </script>
+  </body>
+</html>

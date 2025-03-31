@@ -1,10 +1,12 @@
 require("dotenv").config();
 
 const express = require("express");
+const path = require("path");  // Nécessaire pour gérer les chemins de fichiers
+
 const myDB = require("./src/sgbd/config.js");
 require("./src/sgbd/models.js");
 
-const routerActors = require("./src/routes/player.js");
+const routerActors = require("./src/routes/actors.js");
 const movieRouter = require("./src/routes/movie.js"); // Assuming the file is named `movie.js`
 
 
@@ -13,10 +15,10 @@ const app = express();
 app.use(express.json());
 
 app.get("/", function (req, res) {
-  res.send("Hello World");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.use("/players", routerActors);
+app.use("/", routerActors);
 app.use("/movies", movieRouter); // Use the movie router for routes under "/movies"
 
 
