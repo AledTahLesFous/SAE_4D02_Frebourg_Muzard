@@ -76,19 +76,38 @@ async function initializeGraph() {
 // Modification de la fonction addNodesAndLinks
 function addNodesAndLinks(sourceNode, newNodes) {
     newNodes.forEach(node => {
-        if (!nodes.find(n => n.id === node.id)) {
+        let existingNode = nodes.find(n => n.id === node.id);
+
+        if (!existingNode) {
+            // Si le nœud n'existe pas encore, on l'ajoute
             node.x = sourceNode.x + (Math.random() - 0.5) * 200;
             node.y = sourceNode.y + (Math.random() - 0.5) * 200;
             nodes.push(node);
             links.push({ source: sourceNode, target: node });
 
-            // Ne pas ajouter le film à la liste immédiatement
+            // Ajouter le film à la liste si c'est un film
             if (node.type === 'movie') {
-                node.hidden = true; // Marquer le film comme caché
+                addMovieToList(node.id, node.label);
+            }
+        } else {
+            // Si le nœud existe déjà et qu'il s'agit d'un film, on vérifie ses acteurs
+            if (existingNode.type === 'movie') {
+                let relatedActors = nodes.filter(n => links.some(l => 
+                    (l.source.id === existingNode.id && l.target.id === n.id) ||
+                    (l.target.id === existingNode.id && l.source.id === n.id)
+                ));
+
+                relatedActors.forEach(actor => {
+                    if (actor.id !== sourceNode.id) {
+                        // Si l'acteur trouvé n'est pas déjà connecté à la source, on crée un lien
+                        links.push({ source: sourceNode, target: existingNode });
+                    }
+                });
             }
         }
     });
 }
+
 
 // Fonction pour mettre à jour le graphique
 function updateGraph() {
