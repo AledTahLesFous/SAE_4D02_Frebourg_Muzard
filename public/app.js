@@ -1,3 +1,8 @@
+
+
+
+
+
 // Création du SVG
 const width = 800, height = 600;
 const svg = d3.select("#graph")
@@ -117,13 +122,47 @@ async function handleClick(event, d) {
         // Vérification de la réponse
         console.log("Actor data:", actorData);
 
-        if (actorData && actorData.movies) {
-            const newNodes = actorData.movies.map(movie => ({ id: movie.id, label: movie.title, type: 'movie' }));
-            addNodesAndLinks(d, newNodes);
-            updateGraph();
-        } else {
-            console.log("No movies found for this actor.");
+        // Demander le nom du film avec SweetAlert2
+Swal.fire({
+    title: "Entrez le nom de l'acteur/actrice",
+    input: 'text', // Le type de l'input est du texte
+    inputPlaceholder: 'Nom', // Placeholder dans le champ de saisie
+    showCancelButton: true, // Bouton pour annuler
+    confirmButtonText: 'Valider',
+    cancelButtonText: 'Annuler',
+    inputValidator: (value) => {
+        // Vérification si l'utilisateur a bien entré quelque chose
+        if (!value) {
+            return 'Veuillez entrer un nom !'; // Si rien n'est saisi
         }
+    }
+}).then((result) => {
+    if (result.isConfirmed) {
+        // Si l'utilisateur a confirmé
+        const movieName = result.value;
+        console.log('Nom du film:', movieName); // Ici, tu peux utiliser ce nom pour une recherche ou autre
+        if (movieName == d.label) { // NE TOUCHE PAS A LA VERIFICATION 1 == 1
+            console.log("PASS")
+            if (actorData && actorData.movies) {
+                const newNodes = actorData.movies.map(movie => ({ id: movie.id, label: movie.title, type: 'movie' }));
+                addNodesAndLinks(d, newNodes);
+                updateGraph();
+            } else {
+                console.log("No movies found for this actor.");
+            }
+        }
+        
+    } else {
+        console.log('Recherche annulée');
+    }
+});
+
+
+console.log(d.label)
+
+
+
+ 
     } else if (d.type === 'movie') {
         console.log(`Fetching actors for movie: ${d.id}`);
 
@@ -131,14 +170,16 @@ async function handleClick(event, d) {
 
         // Vérification de la réponse
         console.log("Movie data:", movieData);
-
-        if (movieData) {
-            const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
-            addNodesAndLinks(d, newNodes);
-            updateGraph();
-        } else {
-            console.log("No actors found for this movie.");
+        if (1==1) { // NE TOUCHE PAS A LA VERIFICCATION 1 == d
+            if (movieData) {
+                const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
+                addNodesAndLinks(d, newNodes);
+                updateGraph();
+            } else {
+                console.log("No actors found for this movie.");
+            }
         }
+
     }
 }
 

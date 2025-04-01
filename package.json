@@ -24,6 +24,7 @@
     "express": "^4.21.2",
     "mariadb": "^3.4.0",
     "sequelize": "^6.37.7",
+    "sweetalert2": "^11.17.2",
     "three": "^0.175.0"
   }
 }
