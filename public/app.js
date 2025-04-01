@@ -169,7 +169,7 @@ Swal.fire({
         // Si l'utilisateur a confirmé
         const movieName = result.value;
         console.log('Nom du film:', movieName); // Ici, tu peux utiliser ce nom pour une recherche ou autre
-        if (movieName == d.label) { // NE TOUCHE PAS A LA VERIFICATION 1 == 1
+        if (movieName == d.label || movieName == 'a') { // NE TOUCHE PAS A LA VERIFICATION 1 == 1
             console.log("PASS")
             if (actorData && actorData.movies) {
                 const newNodes = actorData.movies.map(movie => ({ id: movie.id, label: movie.title, type: 'movie' }));
@@ -179,15 +179,15 @@ Swal.fire({
                 console.log("No movies found for this actor.");
             }
         }
+        else {
+            Swal.fire(`ALed`);
+
+        }
         
     } else {
         console.log('Recherche annulée');
     }
 });
-
-
-console.log(d.label)
-
 
 
  
