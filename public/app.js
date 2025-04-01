@@ -74,6 +74,8 @@ async function initializeGraph() {
 }
 
 // Modification de la fonction addNodesAndLinks
+
+
 function addNodesAndLinks(sourceNode, newNodes) {
     newNodes.forEach(node => {
         let existingNode = nodes.find(n => n.id === node.id);
@@ -85,10 +87,7 @@ function addNodesAndLinks(sourceNode, newNodes) {
             nodes.push(node);
             links.push({ source: sourceNode, target: node });
 
-            // Ajouter le film à la liste si c'est un film
-            if (node.type === 'movie') {
-                addMovieToList(node.id, node.label);
-            }
+
         } else {
             // Si le nœud existe déjà et qu'il s'agit d'un film, on vérifie ses acteurs
             if (existingNode.type === 'movie') {
@@ -104,6 +103,10 @@ function addNodesAndLinks(sourceNode, newNodes) {
                     }
                 });
             }
+        }
+
+        if (node.type === 'movie') {
+            node.hidden = true; // Marquer le film comme caché
         }
     });
 }
