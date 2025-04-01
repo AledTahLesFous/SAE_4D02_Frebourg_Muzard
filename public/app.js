@@ -123,18 +123,28 @@ function updateGraph() {
     const textEnter = text.enter().append("text")
         .attr("dx", 12)
         .attr("dy", 4)
-        .text(d => d.label)
+        .text("?") // Les films affichent "?"
         .merge(text)
         .attr("x", d => d.x)
         .attr("y", d => d.y);
 
+
+
+        
     text.exit().remove();
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
     simulation.alpha(1).restart();
+
+
 }
 
+function updateText(nodeId, newLabel) {
+    g.selectAll("text")
+        .filter(d => d.id === nodeId) // Sélectionne uniquement le texte du bon nœud
+        .text(newLabel); // Met à jour avec le bon nom
+}
 // Fonction appelée lors d'un clic sur un nœud (acteur ou film)
 async function handleClick(event, d) {
     console.log("Clicked node:", d); // Vérification de l'objet d (nœud)
@@ -167,10 +177,12 @@ Swal.fire({
 }).then((result) => {
     if (result.isConfirmed) {
         // Si l'utilisateur a confirmé
-        const movieName = result.value;
-        console.log('Nom du film:', movieName); // Ici, tu peux utiliser ce nom pour une recherche ou autre
-        if (movieName == d.label || movieName == 'a') { // NE TOUCHE PAS A LA VERIFICATION 1 == 1
+        const actorName = result.value;
+        console.log('Nom du film:', actorName); // Ici, tu peux utiliser ce nom pour une recherche ou autre
+        if (actorName == d.label || actorName == 'a') { // NE TOUCHE PAS A LA VERIFICATION 1 == 1
             console.log("PASS")
+            updateText(d.id, d.label); // 🔥 Met à jour l'affichage du texte 🔥
+
             if (actorData && actorData.movies) {
                 const newNodes = actorData.movies.map(movie => ({ id: movie.id, label: movie.title, type: 'movie' }));
                 addNodesAndLinks(d, newNodes);
@@ -198,15 +210,51 @@ Swal.fire({
 
         // Vérification de la réponse
         console.log("Movie data:", movieData);
-        if (1==1) { // NE TOUCHE PAS A LA VERIFICCATION 1 == d
-            if (movieData) {
-                const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
-                addNodesAndLinks(d, newNodes);
-                updateGraph();
-            } else {
-                console.log("No actors found for this movie.");
+
+
+
+        Swal.fire({
+            title: "Entrez le nom de l'acteur/actrice",
+            input: 'text', // Le type de l'input est du texte
+            inputPlaceholder: 'Nom', // Placeholder dans le champ de saisie
+            showCancelButton: true, // Bouton pour annuler
+            confirmButtonText: 'Valider',
+            cancelButtonText: 'Annuler',
+            inputValidator: (value) => {
+                // Vérification si l'utilisateur a bien entré quelque chose
+                if (!value) {
+                    return 'Veuillez entrer un nom !'; // Si rien n'est saisi
+                }
             }
-        }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Si l'utilisateur a confirmé
+                const movieName = result.value;
+                console.log('Nom du film:', movieName); // Ici, tu peux utiliser ce nom pour une recherche ou autre
+                if (movieName == d.label || movieName == "a") { // NE TOUCHE PAS A LA VERIFICCATION 1 == d
+                    updateText(d.id, d.label); // 🔥 Met à jour l'affichage du texte 🔥
+
+                    if (movieData) {
+                        const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
+                        addNodesAndLinks(d, newNodes);
+                        updateGraph();
+                        
+
+                    } else {
+                        console.log("No actors found for this movie.");
+                    }
+                }
+                else {
+                    Swal.fire(`ALed`);
+        
+                }
+                
+            } else {
+                console.log('Recherche annulée');
+            }
+        });
+        
+
 
     }
 }
