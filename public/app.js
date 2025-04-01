@@ -3,9 +3,36 @@ const width = 800, height = 600;
 const svg = d3.select("#graph")
     .append("svg")
     .attr("width", width)
-    .attr("height", height)
+    .attr("height", height);
 
+// Ajout d'un groupe pour contenir les éléments du graphique
+const g = svg.append("g");
 
+// Appliquer le zoom sur le SVG
+const zoom = d3.zoom()
+    .scaleExtent([0.5, 5]) // Limites du zoom (min: 0.5x, max: 5x)
+    .on("zoom", (event) => {
+        g.attr("transform", event.transform); // Appliquer la transformation au groupe
+    });
+
+svg.call(zoom); // Activer le zoom sur le SVG
+
+// Appliquer le drag sur les nœuds
+const drag = d3.drag()
+    .on("start", (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart(); // Réactiver la simulation
+        d.fx = d.x; // Fixer la position x
+        d.fy = d.y; // Fixer la position y
+    })
+    .on("drag", (event, d) => {
+        d.fx = event.x; // Mettre à jour la position x
+        d.fy = event.y; // Mettre à jour la position y
+    })
+    .on("end", (event, d) => {
+        if (!event.active) simulation.alphaTarget(0); // Arrêter la simulation
+        d.fx = null; // Libérer la position x
+        d.fy = null; // Libérer la position y
+    });
 
 // Position initiale du premier point
 const center = { x: width / 2, y: height / 2 };
@@ -69,15 +96,16 @@ function addNodesAndLinks(sourceNode, newNodes) {
 
 // Fonction pour mettre à jour le graphique
 function updateGraph() {
-    const link = svg.selectAll("line").data(links);
+    const link = g.selectAll("line").data(links);
     link.enter().append("line").merge(link).attr("stroke", "#aaa");
     link.exit().remove();
 
-    const node = svg.selectAll("circle").data(nodes, d => d.id);
+    const node = g.selectAll("circle").data(nodes, d => d.id);
     const nodeEnter = node.enter().append("circle")
         .attr("r", 10)
         .attr("fill", d => d.type === 'actor' ? "magenta" : d.type === 'movie' ? "pink" : "gray")
-        .on("click", handleClick);
+        .on("click", handleClick)
+        .call(drag); // Appliquer le drag aux nœuds
 
     node.exit().remove();
 
@@ -86,7 +114,7 @@ function updateGraph() {
         .attr("cy", d => d.y);
 
     // Ajouter les labels (textes)
-    const text = svg.selectAll("text").data(nodes, d => d.id);
+    const text = g.selectAll("text").data(nodes, d => d.id);
     const textEnter = text.enter().append("text")
         .attr("dx", 12)
         .attr("dy", 4)
@@ -144,17 +172,17 @@ async function handleClick(event, d) {
 
 // Fonction de mise à jour des positions des nœuds à chaque tick de la simulation
 function ticked() {
-    svg.selectAll("line")
+    g.selectAll("line")
         .attr("x1", d => d.source.x)
         .attr("y1", d => d.source.y)
         .attr("x2", d => d.target.x)
         .attr("y2", d => d.target.y);
 
-    svg.selectAll("circle")
+    g.selectAll("circle")
         .attr("cx", d => d.x)
         .attr("cy", d => d.y);
 
-    svg.selectAll("text")   
+    g.selectAll("text")   
         .attr("x", d => d.x)
         .attr("y", d => d.y);
 }
@@ -187,24 +215,30 @@ function addMovieToList(id, title) {
     }
 }
 
-// Fonction pour mettre en évidence un nœud
 function highlightNode(node) {
-    // Réinitialiser tous les nœuds
-    svg.selectAll("circle")
+    // Réinitialisation des styles
+    g.selectAll("circle")
         .attr("r", 10)
         .attr("stroke", "none")
         .attr("stroke-width", 0);
     
     // Mettre en évidence le nœud sélectionné
-    svg.selectAll("circle")
+    g.selectAll("circle")
         .filter(d => d.id === node.id)
         .attr("r", 15)
         .attr("stroke", "#FFD700")
         .attr("stroke-width", 3);
-    
-    // Centrer la vue sur le nœud
-    simulation.alpha(0.1).restart();
+
+    // Recentrer la vue sur le nœud sélectionné
+    const transform = d3.zoomTransform(svg.node());
+    const newX = width / 2 - node.x * transform.k;
+    const newY = height / 2 - node.y * transform.k;
+
+    svg.transition()
+        .duration(500)
+        .call(zoom.transform, d3.zoomIdentity.translate(newX, newY).scale(transform.k));
 }
+
 
 // Fonction pour rediriger vers un film
 async function redirectToMovie(id, title) {
@@ -277,6 +311,12 @@ initializeGraph();
 
 // Ajouter l'événement de clic au bouton de recherche
 document.addEventListener('DOMContentLoaded', function() {
+    // Vider la liste des films trouvés au démarrage
+    const moviesList = document.getElementById('found-movies');
+    if (moviesList) {
+        moviesList.innerHTML = ''; // Réinitialiser le contenu de la liste
+    }
+
     const searchButton = document.getElementById('search-button');
     if (searchButton) {
         searchButton.addEventListener('click', searchEntity);
