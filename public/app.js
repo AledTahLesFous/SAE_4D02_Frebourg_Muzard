@@ -1,10 +1,23 @@
 // Création du SVG
 const width = 800, height = 600;
-const svg = d3.select("body")
+const svg = d3.select("#graph")  // Assurez-vous que l'élément SVG est appendu à #graph
     .append("svg")
     .attr("width", width)
-    .attr("height", height);
+    .attr("height", height)
+    .style("cursor", "move");  // Pour indiquer que l'élément est déplaçable
 
+// Variable pour suivre la position de déplacement
+let offsetX = 0, offsetY = 0;
+
+// Ajouter le déplacement (drag) pour l'élément SVG
+svg.call(d3.drag()
+    .on("drag", function(event) {
+        offsetX = event.x;  // Mise à jour de l'offset X
+        offsetY = event.y;  // Mise à jour de l'offset Y
+
+        svg.attr("transform", `translate(${offsetX},${offsetY})`);
+    })
+);
 // Position initiale du premier point
 const center = { x: width / 2, y: height / 2 };
 
@@ -68,7 +81,7 @@ function updateGraph() {
     const node = svg.selectAll("circle").data(nodes, d => d.id);
     const nodeEnter = node.enter().append("circle")
         .attr("r", 10)
-        .attr("fill", d => d.type === 'actor' ? "blue" : d.type === 'movie' ? "red" : "gray")
+        .attr("fill", d => d.type === 'actor' ? "magenta" : d.type === 'movie' ? "pink" : "gray")
         .on("click", handleClick);
 
     node.exit().remove();
@@ -146,7 +159,7 @@ function ticked() {
         .attr("cx", d => d.x)
         .attr("cy", d => d.y);
 
-    svg.selectAll("text")
+    svg.selectAll("text")   
         .attr("x", d => d.x)
         .attr("y", d => d.y);
 }
