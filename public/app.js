@@ -73,7 +73,7 @@ async function initializeGraph() {
     }
 }
 
-// Fonction pour ajouter des nœuds et des liens au graph
+// Modification de la fonction addNodesAndLinks
 function addNodesAndLinks(sourceNode, newNodes) {
     newNodes.forEach(node => {
         if (!nodes.find(n => n.id === node.id)) {
@@ -82,9 +82,9 @@ function addNodesAndLinks(sourceNode, newNodes) {
             nodes.push(node);
             links.push({ source: sourceNode, target: node });
 
-            // Si c'est un film, l'ajouter à la liste
+            // Ne pas ajouter le film à la liste immédiatement
             if (node.type === 'movie') {
-                addMovieToList(node.id, node.label);
+                node.hidden = true; // Marquer le film comme caché
             }
         }
     });
@@ -136,117 +136,81 @@ function updateText(nodeId, newLabel) {
         .filter(d => d.id === nodeId) // Sélectionne uniquement le texte du bon nœud
         .text(newLabel); // Met à jour avec le bon nom
 }
-// Fonction appelée lors d'un clic sur un nœud (acteur ou film)
-async function handleClick(event, d) {
-    console.log("Clicked node:", d); // Vérification de l'objet d (nœud)
 
-    // Vérification de son type avant de continuer
-    console.log("Node type:", d.type);
+// Modification de la fonction handleClick pour les films
+async function handleClick(event, d) {
+    console.log("Clicked node:", d);
 
     if (d.type === 'actor') {
         console.log(`Fetching movies for actor: ${d.id}`);
-
         const actorData = await fetchData(`/api/actors/${d.id}/movies`);
-
-        // Vérification de la réponse
         console.log("Actor data:", actorData);
-
-        // Demander le nom du film avec SweetAlert2
-Swal.fire({
-    title: "Entrez le nom de l'acteur/actrice",
-    input: 'text', // Le type de l'input est du texte
-    inputPlaceholder: 'Nom', // Placeholder dans le champ de saisie
-    showCancelButton: true, // Bouton pour annuler
-    confirmButtonText: 'Valider',
-    cancelButtonText: 'Annuler',
-    inputValidator: (value) => {
-        // Vérification si l'utilisateur a bien entré quelque chose
-        if (!value) {
-            return 'Veuillez entrer un nom !'; // Si rien n'est saisi
-        }
-    }
-}).then((result) => {
-    if (result.isConfirmed) {
-        // Si l'utilisateur a confirmé
-        const actorName = result.value;
-        console.log('Nom du film:', actorName); // Ici, tu peux utiliser ce nom pour une recherche ou autre
-        if (actorName == d.label || actorName == 'a') { // NE TOUCHE PAS A LA VERIFICATION 1 == 1
-            console.log("PASS")
-            updateText(d.id, d.label); // 🔥 Met à jour l'affichage du texte 🔥
-
-            if (actorData && actorData.movies) {
-                const newNodes = actorData.movies.map(movie => ({ id: movie.id, label: movie.title, type: 'movie' }));
-                addNodesAndLinks(d, newNodes);
-                updateGraph();
-            } else {
-                console.log("No movies found for this actor.");
-            }
-        }
-        else {
-            Swal.fire(`ALed`);
-
-        }
-        
-    } else {
-        console.log('Recherche annulée');
-    }
-});
-
-
- 
-    } else if (d.type === 'movie') {
-        console.log(`Fetching actors for movie: ${d.id}`);
-
-        const movieData = await fetchData(`/api/movies/${d.id}/actors`);
-
-        // Vérification de la réponse
-        console.log("Movie data:", movieData);
-
-
 
         Swal.fire({
             title: "Entrez le nom de l'acteur/actrice",
-            input: 'text', // Le type de l'input est du texte
-            inputPlaceholder: 'Nom', // Placeholder dans le champ de saisie
-            showCancelButton: true, // Bouton pour annuler
+            input: 'text',
+            inputPlaceholder: 'Nom',
+            showCancelButton: true,
             confirmButtonText: 'Valider',
             cancelButtonText: 'Annuler',
-            inputValidator: (value) => {
-                // Vérification si l'utilisateur a bien entré quelque chose
-                if (!value) {
-                    return 'Veuillez entrer un nom !'; // Si rien n'est saisi
-                }
-            }
+            inputValidator: (value) => value ? null : 'Veuillez entrer un nom !'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Si l'utilisateur a confirmé
-                const movieName = result.value;
-                console.log('Nom du film:', movieName); // Ici, tu peux utiliser ce nom pour une recherche ou autre
-                if (movieName == d.label || movieName == "a") { // NE TOUCHE PAS A LA VERIFICCATION 1 == d
-                    updateText(d.id, d.label); // 🔥 Met à jour l'affichage du texte 🔥
-
-                    if (movieData) {
-                        const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
+                const actorName = result.value;
+                if (actorName == d.label || actorName == 'a') {
+                    console.log("PASS");
+                    updateText(d.id, d.label);
+                    
+                    if (actorData && actorData.movies) {
+                        const newNodes = actorData.movies.map(movie => ({
+                            id: movie.id,
+                            label: movie.title,
+                            type: 'movie'
+                        }));
                         addNodesAndLinks(d, newNodes);
                         updateGraph();
-                        
-
-                    } else {
-                        console.log("No actors found for this movie.");
                     }
-                }
-                else {
+                } else {
                     Swal.fire(`ALed`);
-        
                 }
-                
-            } else {
-                console.log('Recherche annulée');
             }
         });
-        
+    } else if (d.type === 'movie') {
+        console.log(`Fetching actors for movie: ${d.id}`);
+        const movieData = await fetchData(`/api/movies/${d.id}/actors`);
+        console.log("Movie data:", movieData);
 
-
+        Swal.fire({
+            title: "Entrez le nom du film",
+            input: 'text',
+            inputPlaceholder: 'Nom du film',
+            showCancelButton: true,
+            confirmButtonText: 'Valider',
+            cancelButtonText: 'Annuler',
+            inputValidator: (value) => value ? null : 'Veuillez entrer un nom !'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const movieName = result.value;
+                if (movieName == d.label || movieName == "a") {
+                    updateText(d.id, d.label);
+                    
+                    // Maintenant qu'on a trouvé le film, on l'ajoute à la liste
+                    addMovieToList(d.id, d.label);
+                    
+                    if (movieData) {
+                        const newNodes = movieData.map(actor => ({
+                            id: actor.id,
+                            label: actor.name,
+                            type: 'actor'
+                        }));
+                        addNodesAndLinks(d, newNodes);
+                        updateGraph();
+                    }
+                } else {
+                    Swal.fire(`ALed`);
+                }
+            }
+        });
     }
 }
 
