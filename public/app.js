@@ -1,106 +1,155 @@
-window.onload = function() {
-    fetchData("/api/actors/actor_1/movies"); // Charger l'acteur initial avec ses films
-};
-
+// Création du SVG
 const width = 800, height = 600;
-const svg = d3.select("#graph")
+const svg = d3.select("body")
     .append("svg")
     .attr("width", width)
     .attr("height", height);
 
-const simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(d => d.id).distance(100))
-    .force("charge", d3.forceManyBody().strength(-200))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+// Position initiale du premier point
+const center = { x: width / 2, y: height / 2 };
 
+// Noeuds affichés
 let nodes = [];
 let links = [];
 
-function fetchData(url) {
-    fetch(url)
-    .then(response => response.json())
-    .then(data => {
-        updateGraph(data);
-    })
-    .catch(error => console.error("Erreur lors du chargement des données :", error));
-}
+// Simulation de force pour D3.js
+const simulation = d3.forceSimulation(nodes)
+    .force("charge", d3.forceManyBody().strength(-200))
+    .force("center", d3.forceCenter(center.x, center.y))
+    .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+    .on("tick", ticked);
 
-function updateGraph(actorData) {
-    if (!actorData || !actorData.movies) {
-        console.error("Les données ne contiennent pas de films :", actorData);
-        return;
+// Fonction pour récupérer les données
+async function fetchData(endpoint) {
+    try {
+        const response = await fetch(endpoint);
+        if (!response.ok) {
+            throw new Error(`Erreur lors du chargement des données depuis ${endpoint}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(error);
     }
-
-    const movies = actorData.movies;
-
-    nodes = [{ id: `Actor: ${actorData.id}`, name: actorData.name, type: "actor" }];
-    links = [];
-
-    movies.forEach(movie => {
-        nodes.push({ id: `Movie: ${movie.id}`, name: movie.title, type: "movie" });
-        links.push({ source: `Actor: ${actorData.id}`, target: `Movie: ${movie.id}` });
-    });
-
-    renderGraph();
 }
 
-function renderGraph() {
-    svg.selectAll("*").remove();
+// Fonction d'initialisation du graph avec les films d'un acteur
+async function initializeGraph() {
+    const actorData = await fetchData("http://localhost:3000/api/actors/actor_1/movies");
 
-    const link = svg.selectAll(".link")
-        .data(links)
-        .enter().append("line")
-        .attr("class", "link")
-        .attr("stroke", "#aaa");
+    if (actorData) {
+        let initialNode = { id: actorData.id, label: actorData.name, x: center.x, y: center.y, type: 'actor' };
+        nodes.push(initialNode);
 
-    const node = svg.selectAll(".node")
-        .data(nodes)
-        .enter().append("circle")
-        .attr("class", "node")
-        .attr("r", d => (d.type === "actor" ? 10 : 6))
-        .attr("fill", d => (d.type === "actor" ? "pink" : "magenta"))
-        .on("click", handleClick); // Ajout de l'événement click
+        // Créer des nœuds pour les films associés à cet acteur
+        const newNodes = actorData.movies.map(movie => ({ id: movie.id, label: movie.title, type: 'movie' }));
+        addNodesAndLinks(initialNode, newNodes);
+        updateGraph();
+    }
+}
 
-    const text = svg.selectAll(".text")
-        .data(nodes)
-        .enter().append("text")
-        .attr("dy", 3)
-        .attr("x", 10)
-        .text(d => d.name)
-        .attr("font-size", "10px");
-
-    simulation.nodes(nodes).on("tick", () => {
-        link.attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        node.attr("cx", d => d.x)
-            .attr("cy", d => d.y);
-
-        text.attr("x", d => d.x + 10)
-            .attr("y", d => d.y);
+// Fonction pour ajouter des nœuds et des liens au graph
+function addNodesAndLinks(sourceNode, newNodes) {
+    newNodes.forEach(node => {
+        if (!nodes.find(n => n.id === node.id)) {
+            node.x = sourceNode.x + (Math.random() - 0.5) * 200;
+            node.y = sourceNode.y + (Math.random() - 0.5) * 200;
+            nodes.push(node);
+            links.push({ source: sourceNode, target: node });
+        }
     });
+}
 
+// Fonction pour mettre à jour le graphique
+function updateGraph() {
+    const link = svg.selectAll("line").data(links);
+    link.enter().append("line").merge(link).attr("stroke", "#aaa");
+    link.exit().remove();
+
+    const node = svg.selectAll("circle").data(nodes, d => d.id);
+    const nodeEnter = node.enter().append("circle")
+        .attr("r", 10)
+        .attr("fill", d => d.type === 'actor' ? "blue" : d.type === 'movie' ? "red" : "gray")
+        .on("click", handleClick);
+
+    node.exit().remove();
+
+    nodeEnter.merge(node)
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y);
+
+    // Ajouter les labels (textes)
+    const text = svg.selectAll("text").data(nodes, d => d.id);
+    const textEnter = text.enter().append("text")
+        .attr("dx", 12)
+        .attr("dy", 4)
+        .text(d => d.label)
+        .merge(text)
+        .attr("x", d => d.x)
+        .attr("y", d => d.y);
+
+    text.exit().remove();
+
+    simulation.nodes(nodes);
     simulation.force("link").links(links);
     simulation.alpha(1).restart();
 }
 
-// 🟢 Fonction pour ajouter un cercle lorsqu'on clique sur un nœud
-function handleClick(event, d) {
-    fetchData(`/api/movies/${d.id}/actors`)
-    if(d.type == 'movie') {
-        const newNode = {
-            id: `NewNode_${nodes.length}`,
-            name: "New Node",   
-            type: "extra"
-        };
-        nodes.push(newNode);
-        links.push({ source: d.id, target: newNode.id });
-    
-        renderGraph(); // Rafraîchir le graphe avec le nouveau nœud
-    }
+// Fonction appelée lors d'un clic sur un nœud (acteur ou film)
+async function handleClick(event, d) {
+    console.log("Clicked node:", d); // Vérification de l'objet d (nœud)
 
-    
- 
+    // Vérification de son type avant de continuer
+    console.log("Node type:", d.type);
+
+    if (d.type === 'actor') {
+        console.log(`Fetching movies for actor: ${d.id}`);
+
+        const actorData = await fetchData(`/api/actors/${d.id}/movies`);
+
+        // Vérification de la réponse
+        console.log("Actor data:", actorData);
+
+        if (actorData && actorData.movies) {
+            const newNodes = actorData.movies.map(movie => ({ id: movie.id, label: movie.title, type: 'movie' }));
+            addNodesAndLinks(d, newNodes);
+            updateGraph();
+        } else {
+            console.log("No movies found for this actor.");
+        }
+    } else if (d.type === 'movie') {
+        console.log(`Fetching actors for movie: ${d.id}`);
+
+        const movieData = await fetchData(`/api/movies/${d.id}/actors`);
+
+        // Vérification de la réponse
+        console.log("Movie data:", movieData);
+
+        if (movieData) {
+            const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
+            addNodesAndLinks(d, newNodes);
+            updateGraph();
+        } else {
+            console.log("No actors found for this movie.");
+        }
+    }
 }
+
+// Fonction de mise à jour des positions des nœuds à chaque tick de la simulation
+function ticked() {
+    svg.selectAll("line")
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+    svg.selectAll("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y);
+
+    svg.selectAll("text")
+        .attr("x", d => d.x)
+        .attr("y", d => d.y);
+}
+
+// Initialiser le graph avec un acteur de départ
+initializeGraph();
