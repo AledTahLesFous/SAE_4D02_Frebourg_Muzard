@@ -1,8 +1,3 @@
-
-
-
-
-
 // Création du SVG
 const width = 800, height = 600;
 const svg = d3.select("#graph")
@@ -71,14 +66,19 @@ async function initializeGraph() {
     const actorData = await fetchData("http://localhost:3000/api/actors/actor_1/movies");
 
     if (actorData) {
+        // Ajouter l'acteur initial au graphe
         let initialNode = { id: actorData.id, label: actorData.name, x: center.x, y: center.y, type: 'actor' };
         nodes.push(initialNode);
 
-        // Ajouter les films trouvés à la liste
-        actorData.movies.forEach(movie => {
-            addMovieToList(movie.id, movie.title);
-        });
-        updateGraph();
+        // Ajouter les films associés au graphe sans les afficher dans la liste
+        const movieNodes = actorData.movies.map(movie => ({
+            id: movie.id,
+            label: movie.title,
+            type: 'movie',
+        }));
+
+        addNodesAndLinks(initialNode, movieNodes); // Ajouter les films au graphe
+        updateGraph(); // Mettre à jour le graphe
     }
 }
 
