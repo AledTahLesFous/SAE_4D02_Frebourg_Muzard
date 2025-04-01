@@ -9,18 +9,23 @@ require("./src/sgbd/models.js");
 
 const routerActors = require("./src/routes/actors.js");
 const movieRouter = require("./src/routes/movie.js"); // Assuming the file is named `movie.js`
+const searchRoutes = require("./src/routes/recherche.js"); // Import des routes de recherche
 
 
 const app = express();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
+
+
 
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.use("/", searchRoutes);
 app.use("/", routerActors);
 app.use("/", movieRouter); // Use the movie router for routes under "/movies"
 
