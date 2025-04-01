@@ -336,26 +336,41 @@ async function searchEntity() {
     const searchTerm = document.getElementById('search-input').value.trim();
     if (!searchTerm) return;
 
-    // Rechercher uniquement parmi les films déjà trouvés
-    let foundMovie = [...foundMovies].find(movieId => {
-        let movieNode = nodes.find(n => n.id === movieId);
-        return movieNode && movieNode.label.toLowerCase() === searchTerm.toLowerCase();
-    });
+    try {
+        // Recherche de films uniquement
+        const moviesResponse = await fetch(`/api/search/movies?query=${encodeURIComponent(searchTerm)}`);
+        if (moviesResponse.ok) {
+            const movies = await moviesResponse.json();
+            if (movies && movies.length > 0) {
+                const movie = movies[0];
+                let movieNode = nodes.find(n => n.id === movie.id);
 
-    if (foundMovie) {
-        // Si le film est trouvé dans les films déjà affichés
-        const movieNode = nodes.find(n => n.id === foundMovie);
-        highlightNode(movieNode);
-    } else {
-        // Si le film n'a pas encore été trouvé, on affiche un message
-        Swal.fire({
-            icon: "error",
-            title: "Film non trouvé",
-            text: "Ce film n'a pas encore été découvert dans le jeu.",
-        });
+                if (!movieNode) {
+                    movieNode = { id: movie.id, label: movie.title, type: 'movie', x: center.x, y: center.y };
+                    nodes.push(movieNode);
+                    addMovieToList(movie.id, movie.title);
+                }
+
+                const movieData = await fetchData(`/api/movies/${movie.id}/actors`);
+                if (movieData) {
+                    const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
+                    addNodesAndLinks(movieNode, newNodes);
+                    updateGraph();
+                }
+
+                // Mettre en évidence le film après l'avoir ajouté au graphe
+                highlightNode(movieNode);
+            } else {
+                alert("Aucun film trouvé pour cette recherche.");
+            }
+        } else {
+            alert("Erreur lors de la recherche de films.");
+        }
+    } catch (error) {
+        console.error("Erreur lors de la recherche:", error);
+        alert("Une erreur est survenue lors de la recherche. Veuillez réessayer.");
     }
 }
-
 
 // Initialiser le graph avec un acteur de départ
 initializeGraph();
