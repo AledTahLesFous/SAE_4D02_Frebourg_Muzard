@@ -601,15 +601,21 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function saveGraphToLocalStorage() {
+    // Créer un tableau pour les nœuds avec leurs labels actuels
     const graphData = {
-        nodes: nodes.map(n => ({
-            id: n.id,
-            label: n.label,
-            type: n.type,
-            x: n.x,
-            y: n.y,
-            found: foundMoviesSet.has(n.label) || foundActorsSet.has(n.label), // Vérification si trouvé
-        })),
+        nodes: nodes.map(n => {
+            // Vérifier si le nœud a été trouvé et modifier son label en conséquence
+
+            
+            return {
+                id: n.id,
+                label: n.label,
+                type: n.type,
+                x: n.x,
+                y: n.y,
+                found: foundMoviesSet.has(n.label) || foundActorsSet.has(n.label), // Vérification si trouvé
+            };
+        }),
         links: links.map(l => ({
             source: l.source.id,
             target: l.target.id,
@@ -623,7 +629,6 @@ function saveGraphToLocalStorage() {
     console.log("Graph saved to localStorage.");
     console.log(graphData.foundActors);
 }
-
 
 
 
@@ -649,25 +654,13 @@ function loadGraphFromLocalStorage() {
         nodes = [];
         links = [];
 
-// Charger les nœuds
+        // Charger les nœuds
         graphData.nodes.forEach(n => {
-            // Si l'acteur ou le film a été trouvé, on l'ajoute aux ensembles appropriés
-            if (n.found) {
-                if (n.type === 'movie') {
-                    foundMoviesSet.add(n.label);
-                } else if (n.type === 'actor') {
-                    foundActorsSet.add(n.label);
-                }
-            }
-
-            // Ajouter le nœud au graphe
-            // Remplace "?" par le label réel si l'acteur/film a été trouvé
+            // Ajouter le nœud au graphe sans modifier le label
             nodes.push({
-                ...n,
-                label: n.found ? n.label : "?" // Ne mettre "?" que si le nœud n'a pas été trouvé
+                ...n, // Conserve les propriétés d'origine, y compris le label
             });
         });
-
 
         // Charger les liens
         links = graphData.links.map(l => ({
@@ -687,6 +680,7 @@ function loadGraphFromLocalStorage() {
         console.log("No graph data found in localStorage.");
     }
 }
+
 
 
 
