@@ -12,6 +12,7 @@ const movieRouter = require("./src/routes/movie.js"); // Assuming the file is na
 const searchRoutes = require("./src/routes/recherche.js"); // Import des routes de recherche
 const wikipediaRoutes = require("./src/routes/wikipedia.js"); // Nouvelle route pour Wikipedia
 const randomActorRoutes = require("./src/routes/randomActor.js"); // Route pour acteur aléatoire
+const statsRoutes = require("./src/routes/stats.js"); // Route pour les statistiques
 
 
 const app = express();
@@ -32,6 +33,7 @@ app.use("/", routerActors);
 app.use("/", movieRouter); // Use the movie router for routes under "/movies"
 app.use("/", wikipediaRoutes);
 app.use("/", randomActorRoutes); // Utilisation des routes pour acteur aléatoire
+app.use("/", statsRoutes); // Utilisation des routes pour les statistiques
 
 const PORT = process.env.PORT || 3000;
 
