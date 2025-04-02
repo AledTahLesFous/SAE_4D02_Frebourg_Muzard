@@ -350,46 +350,6 @@ function updateFoundMoviesList() {
     }
 }
 
-// Fonction pour ajouter des acteurs à la liste avec icône d'info
-function addActorToList(id, name) {
-    if (!foundActorsSet.has(name)) {
-        foundActorsSet.add(name); // Ajouter à l'ensemble des acteurs trouvés
-
-        const actorsList = document.getElementById('found-actors');
-        const listItem = document.createElement('li');
-        listItem.setAttribute('data-id', id);
-        
-        // Créer le span pour le nom de l'acteur
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = name;
-        nameSpan.style.cursor = 'pointer';
-        nameSpan.addEventListener('click', () => {
-            const actorNode = nodes.find(n => n.id === id);
-            if (actorNode) {
-                highlightNode(actorNode);
-            }
-        });
-        
-        // Créer l'icône d'information
-        const infoIcon = document.createElement('i');
-        infoIcon.className = 'fas fa-info-circle';
-        infoIcon.style.marginLeft = '10px';
-        infoIcon.style.cursor = 'pointer';
-        infoIcon.style.color = '#007bff';
-        infoIcon.title = 'Informations sur Wikipedia';
-        infoIcon.addEventListener('click', (e) => {
-            e.stopPropagation();
-            showWikipediaInfoModal(name, 'actor');
-        });
-        
-        // Assembler les éléments
-        listItem.appendChild(nameSpan);
-        listItem.appendChild(infoIcon);
-        actorsList.appendChild(listItem);
-        saveGraphToLocalStorage();
-    }
-}
-
 function updateFoundActorsList() {
     const actorsList = document.getElementById('found-actors');
     if (actorsList) {
