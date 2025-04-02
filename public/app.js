@@ -5,6 +5,9 @@ const svg = d3.select("#graph")
     .attr("width", width)
     .attr("height", height);
 
+let foundMoviesSet = new Set(); // Stocke les films déjà trouvés
+
+
 // Ajout d'un groupe pour contenir les éléments du graphique
 const g = svg.append("g");
 
@@ -257,29 +260,25 @@ function ticked() {
 let foundMovies = new Set();
 
 function addMovieToList(id, title) {
-    // Vérifier si le film est déjà dans la liste
-    if (!foundMovies.has(id)) {
-        foundMovies.add(id);
-        
+    if (!foundMoviesSet.has(title)) {
+        foundMoviesSet.add(title); // Ajouter à l'ensemble des films trouvés
+
         const moviesList = document.getElementById('found-movies');
         const listItem = document.createElement('li');
         listItem.setAttribute('data-id', id);
         listItem.textContent = title;
-        
-        // Ajouter un événement pour mettre en évidence le nœud correspondant dans le graphe
+
         listItem.addEventListener('click', () => {
             const movieNode = nodes.find(n => n.id === id);
             if (movieNode) {
                 highlightNode(movieNode);
-            } else {
-                // Si le film n'est pas déjà affiché dans le graphe, le rechercher
-                redirectToMovie(id, title);
             }
         });
-        
+
         moviesList.appendChild(listItem);
     }
 }
+
 
 function highlightNode(node) {
     // Réinitialisation des styles
@@ -336,19 +335,23 @@ async function searchEntity() {
     const searchTerm = document.getElementById('search-input').value.trim();
     if (!searchTerm) return;
 
+    // Vérifier si le film est déjà trouvé
+    if (!foundMoviesSet.has(searchTerm)) {
+        Swal.fire("Erreur", "Ce film n'a pas encore été trouvé dans le graphe !", "error");
+        return;
+    }
+
     try {
-        // Recherche de films uniquement
         const moviesResponse = await fetch(`/api/search/movies?query=${encodeURIComponent(searchTerm)}`);
         if (moviesResponse.ok) {
             const movies = await moviesResponse.json();
-            if (movies && movies.length > 0) {
+            if (movies.length > 0) {
                 const movie = movies[0];
                 let movieNode = nodes.find(n => n.id === movie.id);
 
                 if (!movieNode) {
                     movieNode = { id: movie.id, label: movie.title, type: 'movie', x: center.x, y: center.y };
                     nodes.push(movieNode);
-                    addMovieToList(movie.id, movie.title);
                 }
 
                 const movieData = await fetchData(`/api/movies/${movie.id}/actors`);
@@ -358,19 +361,19 @@ async function searchEntity() {
                     updateGraph();
                 }
 
-                // Mettre en évidence le film après l'avoir ajouté au graphe
                 highlightNode(movieNode);
             } else {
-                alert("Aucun film trouvé pour cette recherche.");
+                Swal.fire("Aucun film trouvé", "Ce film ne figure pas dans la base de données.", "info");
             }
         } else {
-            alert("Erreur lors de la recherche de films.");
+            Swal.fire("Erreur", "Problème de connexion au serveur.", "error");
         }
     } catch (error) {
         console.error("Erreur lors de la recherche:", error);
-        alert("Une erreur est survenue lors de la recherche. Veuillez réessayer.");
+        Swal.fire("Erreur", "Une erreur s'est produite lors de la recherche.", "error");
     }
 }
+
 
 // Initialiser le graph avec un acteur de départ
 initializeGraph();
