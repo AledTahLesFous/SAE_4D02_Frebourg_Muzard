@@ -592,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Fonction pour mettre à jour les statistiques
 async function updateStats() {
     try {
-        // Récupérer les statistiques depuis l'API
+        // Récupérer les statistiques de base depuis l'API
         const stats = await fetchData('/api/stats');
         
         if (stats) {
@@ -614,6 +614,91 @@ async function updateStats() {
             
             document.getElementById('actors-progress').style.width = `${actorsProgressPercent}%`;
             document.getElementById('movies-progress').style.width = `${moviesProgressPercent}%`;
+        }
+        
+        // Récupérer les statistiques détaillées
+        const detailedStats = await fetchData('/api/stats/detailed');
+        
+        if (detailedStats) {
+            // Mettre à jour les statistiques détaillées
+            document.getElementById('avg-actors-per-movie').textContent = detailedStats.averageActorsPerMovie;
+            
+            // Mettre à jour le nombre total de genres
+            document.getElementById('total-genres').textContent = detailedStats.totalGenres || '?';
+            
+            // Mettre à jour les films par année
+            const moviesByYearContainer = document.getElementById('movies-by-year');
+            if (detailedStats.moviesByYear && detailedStats.moviesByYear.length > 0) {
+                // Vider le conteneur
+                moviesByYearContainer.innerHTML = '';
+                
+                // Créer une liste pour afficher les films par année
+                const yearList = document.createElement('ul');
+                yearList.style.listStyleType = 'none';
+                yearList.style.padding = '0';
+                yearList.style.margin = '0';
+                
+                // Ajouter chaque année avec son nombre de films
+                detailedStats.moviesByYear.forEach(item => {
+                    const yearItem = document.createElement('li');
+                    yearItem.style.display = 'flex';
+                    yearItem.style.justifyContent = 'space-between';
+                    yearItem.style.padding = '5px 0';
+                    yearItem.style.borderBottom = '1px solid #eee';
+                    
+                    const yearSpan = document.createElement('span');
+                    yearSpan.textContent = item.year;
+                    
+                    const countSpan = document.createElement('span');
+                    countSpan.textContent = item.count;
+                    countSpan.style.fontWeight = 'bold';
+                    
+                    yearItem.appendChild(yearSpan);
+                    yearItem.appendChild(countSpan);
+                    yearList.appendChild(yearItem);
+                });
+                
+                moviesByYearContainer.appendChild(yearList);
+            } else {
+                moviesByYearContainer.innerHTML = '<div>Aucune donnée disponible</div>';
+            }
+            
+            // Mettre à jour les films par genre
+            const moviesByGenreContainer = document.getElementById('movies-by-genre');
+            if (detailedStats.moviesByGenre && detailedStats.moviesByGenre.length > 0) {
+                // Vider le conteneur
+                moviesByGenreContainer.innerHTML = '';
+                
+                // Créer une liste pour afficher les films par genre
+                const genreList = document.createElement('ul');
+                genreList.style.listStyleType = 'none';
+                genreList.style.padding = '0';
+                genreList.style.margin = '0';
+                
+                // Ajouter chaque genre avec son nombre de films
+                detailedStats.moviesByGenre.forEach(item => {
+                    const genreItem = document.createElement('li');
+                    genreItem.style.display = 'flex';
+                    genreItem.style.justifyContent = 'space-between';
+                    genreItem.style.padding = '5px 0';
+                    genreItem.style.borderBottom = '1px solid #eee';
+                    
+                    const genreSpan = document.createElement('span');
+                    genreSpan.textContent = item.genre;
+                    
+                    const countSpan = document.createElement('span');
+                    countSpan.textContent = item.count;
+                    countSpan.style.fontWeight = 'bold';
+                    
+                    genreItem.appendChild(genreSpan);
+                    genreItem.appendChild(countSpan);
+                    genreList.appendChild(genreItem);
+                });
+                
+                moviesByGenreContainer.appendChild(genreList);
+            } else {
+                moviesByGenreContainer.innerHTML = '<div>Aucune donnée disponible</div>';
+            }
         }
     } catch (error) {
         console.error('Erreur lors de la mise à jour des statistiques:', error);
@@ -742,7 +827,14 @@ document.getElementById('reset-button').addEventListener('click', () => {
             // Réinitialisation des listes d'acteurs et de films dans l'interface
             updateFoundMoviesList(); // Mise à jour de la liste des films
             updateFoundActorsList(); // Mise à jour de la liste des acteurs
+            startTime = Date.now();
+            localStorage.setItem("startTime", startTime); // Mettre à jour dans localStorage
 
+            // Mettre à jour immédiatement l'affichage du chrono
+            updateChrono();
+
+            // Afficher à nouveau la div du chrono si elle est cachée
+            document.getElementById('chrono').style.display = 'block';
             // Mise à jour du graphe (efface tout)
             updateGraph();
 
@@ -943,3 +1035,31 @@ function cropImage(imageUrl, cropSize = 80) {
     });
 }
 
+
+let savedTime = localStorage.getItem("startTime");
+let startTime;
+
+// Si aucune valeur n'est sauvegardée, démarrer un nouveau chrono
+if (!savedTime) {
+    startTime = Date.now();
+    localStorage.setItem("startTime", startTime); // Sauvegarder l'heure de départ
+} else {
+    startTime = parseInt(savedTime); // Récupérer l'heure de départ sauvegardée
+}
+
+// Fonction pour mettre à jour le chrono
+function updateChrono() {
+    const elapsedTime = Date.now() - startTime; // Temps écoulé en millisecondes
+    const seconds = Math.floor(elapsedTime / 1000); // Convertir en secondes
+
+    // Afficher les secondes dans l'élément HTML avec l'ID "chrono"
+    document.getElementById('chrono').innerText = `Chrono: ${seconds} s`;
+}
+
+// Démarrer le chrono en appelant la fonction updateChrono chaque seconde
+setInterval(updateChrono, 1000);
+
+// Sauvegarder le temps de départ lorsque la page est fermée ou rechargée
+window.addEventListener("beforeunload", () => {
+    localStorage.setItem("startTime", startTime); // Sauvegarder l'heure de départ
+});
