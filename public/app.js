@@ -268,7 +268,72 @@ function ticked() {
         .attr("y", d => d.y);
 }
 
-// Fonction pour ajouter des films à la liste
+async function getWikipediaInfo(title, type) {
+    try {
+        console.log(`Recherche d'informations pour ${title} (type: ${type})`);
+        
+        // URL complète
+        const response = await fetch(`/api/wikipedia?title=${encodeURIComponent(title)}&type=${type}`);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Erreur HTTP ${response.status}: ${errorText}`);
+            throw new Error(`Erreur lors de la récupération des informations Wikipedia: ${response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Erreur Wikipedia détaillée:", error);
+        return { error: "Impossible de récupérer les informations Wikipedia" };
+    }
+}
+
+// Fonction pour afficher les informations Wikipedia dans une modal
+function showWikipediaInfoModal(title, type) {
+    Swal.fire({
+        title: `Recherche d'informations pour ${title}`,
+        text: 'Chargement...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    getWikipediaInfo(title, type)
+        .then(data => {
+            if (data.error) {
+                Swal.fire({
+                    title: "Information non trouvée",
+                    text: "Impossible de trouver des informations sur Wikipedia pour " + title,
+                    icon: "error"
+                });
+            } else {
+                Swal.fire({
+                    title: data.title || title,
+                    html: `
+                        <div style="text-align: left; max-height: 300px; overflow-y: auto;">
+                            ${data.thumbnail ? `<img src="${data.thumbnail}" alt="${title}" style="float: right; max-width: 150px; margin-left: 10px;">` : ''}
+                            <p>${data.extract || "Aucune description disponible."}</p>
+                            ${data.url ? `<p><a href="${data.url}" target="_blank">En savoir plus sur Wikipedia</a></p>` : ''}
+                        </div>
+                    `,
+                    confirmButtonText: "Fermer",
+                    width: '600px'
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Erreur lors de l'affichage des infos:", error);
+            Swal.fire({
+                title: "Erreur",
+                text: "Une erreur est survenue lors de la récupération des informations",
+                icon: "error"
+            });
+        });
+}
+
+// Fonction pour ajouter des films à la liste avec icône d'info
 function addMovieToList(id, title) {
     if (!foundMoviesSet.has(title)) {
         foundMoviesSet.add(title); // Ajouter à l'ensemble des films trouvés
@@ -276,15 +341,33 @@ function addMovieToList(id, title) {
         const moviesList = document.getElementById('found-movies');
         const listItem = document.createElement('li');
         listItem.setAttribute('data-id', id);
-        listItem.textContent = title;
-
-        listItem.addEventListener('click', () => {
+        
+        // Créer le span pour le titre du film
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = title;
+        titleSpan.style.cursor = 'pointer';
+        titleSpan.addEventListener('click', () => {
             const movieNode = nodes.find(n => n.id === id);
             if (movieNode) {
                 highlightNode(movieNode);
             }
         });
-
+        
+        // Créer l'icône d'information
+        const infoIcon = document.createElement('i');
+        infoIcon.className = 'fas fa-info-circle';
+        infoIcon.style.marginLeft = '10px';
+        infoIcon.style.cursor = 'pointer';
+        infoIcon.style.color = '#007bff';
+        infoIcon.title = 'Informations sur Wikipedia';
+        infoIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showWikipediaInfoModal(title, 'movie');
+        });
+        
+        // Assembler les éléments
+        listItem.appendChild(titleSpan);
+        listItem.appendChild(infoIcon);
         moviesList.appendChild(listItem);
         saveGraphToLocalStorage();
     }
@@ -307,6 +390,7 @@ function updateFoundMoviesList() {
 
 
 // Nouvelle fonction pour ajouter des acteurs à la liste
+// Fonction pour ajouter des acteurs à la liste avec icône d'info
 function addActorToList(id, name) {
     if (!foundActorsSet.has(name)) {
         foundActorsSet.add(name); // Ajouter à l'ensemble des acteurs trouvés
@@ -314,15 +398,33 @@ function addActorToList(id, name) {
         const actorsList = document.getElementById('found-actors');
         const listItem = document.createElement('li');
         listItem.setAttribute('data-id', id);
-        listItem.textContent = name;
-
-        listItem.addEventListener('click', () => {
+        
+        // Créer le span pour le nom de l'acteur
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = name;
+        nameSpan.style.cursor = 'pointer';
+        nameSpan.addEventListener('click', () => {
             const actorNode = nodes.find(n => n.id === id);
             if (actorNode) {
                 highlightNode(actorNode);
             }
         });
-
+        
+        // Créer l'icône d'information
+        const infoIcon = document.createElement('i');
+        infoIcon.className = 'fas fa-info-circle';
+        infoIcon.style.marginLeft = '10px';
+        infoIcon.style.cursor = 'pointer';
+        infoIcon.style.color = '#007bff';
+        infoIcon.title = 'Informations sur Wikipedia';
+        infoIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showWikipediaInfoModal(name, 'actor');
+        });
+        
+        // Assembler les éléments
+        listItem.appendChild(nameSpan);
+        listItem.appendChild(infoIcon);
         actorsList.appendChild(listItem);
         saveGraphToLocalStorage();
     }
@@ -395,7 +497,7 @@ async function redirectToMovie(id, title) {
     }
 }
 
-// Nouvelle fonction pour rediriger vers un acteur
+// Fonction pour rediriger vers un acteur
 async function redirectToActor(id, name) {
     try {
         // Ajouter l'acteur au graphe s'il n'y est pas déjà
