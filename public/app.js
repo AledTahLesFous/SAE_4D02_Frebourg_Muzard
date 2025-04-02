@@ -356,6 +356,7 @@ function addMovieToList(id, title) {
         saveGraphToLocalStorage();
     }
 }
+
 function updateFoundMoviesList() {
     const moviesList = document.getElementById('found-movies');
     if (moviesList) {
@@ -365,11 +366,38 @@ function updateFoundMoviesList() {
         // Ajouter les films trouvés à la liste
         foundMoviesSet.forEach(movie => {
             const listItem = document.createElement('li');
-            listItem.textContent = movie;
+            
+            // Créer le span pour le titre du film
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = movie;
+            titleSpan.style.cursor = 'pointer';
+            titleSpan.addEventListener('click', () => {
+                const movieNode = nodes.find(n => n.label === movie);
+                if (movieNode) {
+                    highlightNode(movieNode);
+                }
+            });
+
+            // Créer l'icône d'information
+            const infoIcon = document.createElement('i');
+            infoIcon.className = 'fas fa-info-circle';
+            infoIcon.style.marginLeft = '10px';
+            infoIcon.style.cursor = 'pointer';
+            infoIcon.style.color = '#007bff';
+            infoIcon.title = 'Informations sur Wikipedia';
+            infoIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showWikipediaInfoModal(movie, 'movie');
+            });
+
+            // Assembler les éléments
+            listItem.appendChild(titleSpan);
+            listItem.appendChild(infoIcon);
             moviesList.appendChild(listItem);
         });
     }
 }
+
 
 // Nouvelle fonction pour ajouter des acteurs à la liste
 // Fonction pour ajouter des acteurs à la liste avec icône d'info
@@ -421,11 +449,37 @@ function updateFoundActorsList() {
         // Ajouter les acteurs trouvés à la liste
         foundActorsSet.forEach(actor => {
             const listItem = document.createElement('li');
-            listItem.textContent = actor;
+            
+            // Créer le span pour le nom de l'acteur
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = actor;
+            nameSpan.style.cursor = 'pointer';
+            nameSpan.addEventListener('click', () => {
+                const actorNode = nodes.find(n => n.label === actor);
+                if (actorNode) {
+                    highlightNode(actorNode);
+                }
+            });
+
+            // Créer l'icône d'information
+            const infoIcon = document.createElement('i');
+            infoIcon.className = 'fas fa-info-circle';
+            infoIcon.style.marginLeft = '10px';
+            infoIcon.style.cursor = 'pointer';
+            infoIcon.style.color = '#007bff';
+            infoIcon.title = 'Informations sur Wikipedia';
+            infoIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showWikipediaInfoModal(actor, 'actor');
+            });
+
+            // Assembler les éléments
+            listItem.appendChild(nameSpan);
+            listItem.appendChild(infoIcon);
             actorsList.appendChild(listItem);
         });
     }
-}
+}       
 
 function highlightNode(node) {
     // Réinitialisation des styles
@@ -579,15 +633,21 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function saveGraphToLocalStorage() {
+    // Créer un tableau pour les nœuds avec leurs labels actuels
     const graphData = {
-        nodes: nodes.map(n => ({
-            id: n.id,
-            label: n.label,
-            type: n.type,
-            x: n.x,
-            y: n.y,
-            found: foundMoviesSet.has(n.label) || foundActorsSet.has(n.label), // Vérification si trouvé
-        })),
+        nodes: nodes.map(n => {
+            // Vérifier si le nœud a été trouvé et modifier son label en conséquence
+
+            
+            return {
+                id: n.id,
+                label: n.label,
+                type: n.type,
+                x: n.x,
+                y: n.y,
+                found: foundMoviesSet.has(n.label) || foundActorsSet.has(n.label), // Vérification si trouvé
+            };
+        }),
         links: links.map(l => ({
             source: l.source.id,
             target: l.target.id,
@@ -624,25 +684,13 @@ function loadGraphFromLocalStorage() {
         nodes = [];
         links = [];
 
-// Charger les nœuds
+        // Charger les nœuds
         graphData.nodes.forEach(n => {
-            // Si l'acteur ou le film a été trouvé, on l'ajoute aux ensembles appropriés
-            if (n.found) {
-                if (n.type === 'movie') {
-                    foundMoviesSet.add(n.label);
-                } else if (n.type === 'actor') {
-                    foundActorsSet.add(n.label);
-                }
-            }
-
-            // Ajouter le nœud au graphe
-            // Remplace "?" par le label réel si l'acteur/film a été trouvé
+            // Ajouter le nœud au graphe sans modifier le label
             nodes.push({
-                ...n,
-                label: n.found ? n.label : "?" // Ne mettre "?" que si le nœud n'a pas été trouvé
+                ...n, // Conserve les propriétés d'origine, y compris le label
             });
         });
-
 
         // Charger les liens
         links = graphData.links.map(l => ({
@@ -696,11 +744,17 @@ document.getElementById('reset-button').addEventListener('click', () => {
             nodes = [];
             links = [];
 
+            // Réinitialisation des listes d'acteurs et de films dans l'interface
+            updateFoundMoviesList(); // Mise à jour de la liste des films
+            updateFoundActorsList(); // Mise à jour de la liste des acteurs
+
             // Mise à jour du graphe (efface tout)
             updateGraph();
 
             // Notification de succès
             Swal.fire("Réinitialisé !", "Le graphe a été réinitialisé.", "success");
         }
+        initializeGraph();
     });
 });
+
