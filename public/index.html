@@ -7,12 +7,239 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .main-container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Style pour le panneau de statistiques (gauche) */
+        #stats-panel {
+            width: 250px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-right: 20px;
+        }
+
+        .stats-container {
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Style pour le graphique (milieu) */
+        #graph-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         #graph {
             width: 800px;
             height: 600px;
             overflow: hidden;
-            margin: 50px auto;
-            border: 1px solid black;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Style pour le panneau de recherche (droite) */
+        #search-panel {
+            width: 250px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-left: 20px;
+        }
+
+        .search-container {
+            margin-bottom: 15px;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        #search-button, #reset-button {
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        #reset-button {
+            background-color: #f44336;
+        }
+
+        /* Style pour les listes déroulantes */
+        #found-movies, #found-actors {
+            max-height: 120px; /* Hauteur pour environ 3 éléments */
+            overflow-y: auto; /* Ajoute une barre de défilement verticale */
+            padding: 0;
+            margin: 0;
+            list-style-type: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        #found-movies li, #found-actors li {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            height: 40px; /* Hauteur fixe pour chaque élément */
+            box-sizing: border-box; /* Pour que le padding soit inclus dans la hauteur */
+            display: flex;
+            align-items: center;
+        }
+        
+        #found-movies li:last-child, #found-actors li:last-child {
+            border-bottom: none;
+        }
+        
+        .results-container h3 {
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        /* Style pour la barre de défilement */
+        #found-movies::-webkit-scrollbar, #found-actors::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #found-movies::-webkit-scrollbar-track, #found-actors::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        #found-movies::-webkit-scrollbar-thumb, #found-actors::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        #found-movies::-webkit-scrollbar-thumb:hover, #found-actors::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Styles pour les barres de progression */
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .stat-item {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        /* Style pour les listes déroulantes */
+        #found-movies, #found-actors {
+            max-height: 120px; /* Hauteur pour environ 3 éléments */
+            overflow-y: auto; /* Ajoute une barre de défilement verticale */
+            padding: 0;
+            margin: 0;
+            list-style-type: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        #found-movies li, #found-actors li {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        #found-movies li:last-child, #found-actors li:last-child {
+            border-bottom: none;
+        }
+        
+        .results-container h3 {
+            margin-top: 15px;
+            margin-bottom: 5px;
         }
         
         /* Style pour les listes déroulantes */
@@ -43,14 +270,44 @@
 </head>
 <body>
     <h1>Actor and Movies Graph</h1>
-    <div class="container">
+    <div class="main-container">
+        <!-- Panneau de statistiques (gauche) -->
+        <div id="stats-panel">
+            <h2>Statistiques</h2>
+            <div class="stats-container">
+                <!-- Films découverts -->
+                <div class="stat-item">
+                    <div class="stat-label">Films découverts</div>
+                    <div class="stat-value" id="found-movies-count">0</div>
+                    <div class="stat-label">sur <span id="total-movies-count">?</span> films</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="movies-progress"></div>
+                    </div>
+                </div>
+                <!-- Acteurs découverts -->
+                <div class="stat-item">
+                    <div class="stat-label">Acteurs découverts</div>
+                    <div class="stat-value" id="found-actors-count">0</div>
+                    <div class="stat-label">sur <span id="total-actors-count">?</span> acteurs</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="actors-progress"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Graphique (milieu) -->
+        <div id="graph-container">
+            <div id="graph"></div>
+        </div>
+        
+        <!-- Panneau de recherche (droite) -->
         <div id="search-panel">
             <h2>Recherche</h2>
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="Rechercher un film ou un acteur...">
                 <button id="search-button">Rechercher</button>
                 <button id="reset-button">Réinitialiser</button>
-
             </div>
             <div class="results-container">
                 <h3>Films trouvés</h3>
@@ -60,7 +317,7 @@
                 <ul id="found-actors"></ul>
             </div>
         </div>
-    <div id="graph"></div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script type="module" src="app.js"></script>
