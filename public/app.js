@@ -685,8 +685,35 @@ document.getElementById('reset-button').addEventListener('click', () => {
 async function handleClick(event, d) {
     console.log("Clicked node:", d);
 
-    const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 100); // Limite à 10 caractères et remplace des lettres aléatoires par "_"
+    const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 10); // Tronquer et masquer le label
 
+    // Créer une liste avec les trois options possibles
+    const randomChoice = Math.random();
+    let displayedLabel;
+
+    if (randomChoice < 0) {
+        displayedLabel = 'aled'; // 33% de chances d'afficher "aled"
+    } else if (randomChoice < 0) {
+        displayedLabel = truncatedMaskedLabel; // 33% de chances d'afficher le label tronqué et masqué
+    } else {
+        // 34% de chances d'afficher l'image Wikipedia
+        try {
+            const wikiData = await getWikipediaInfo(d.label, d.type);
+            if (wikiData && wikiData.thumbnail) {
+                displayedLabel = `
+                    <div style="text-align: center;">
+                        <img src="${wikiData.thumbnail}" alt="${d.label}" style="max-width: 120px; border-radius: 8px;">
+                        <p>${wikiData.title || d.label}</p>
+                    </div>
+                `;
+            } else {
+                displayedLabel = 'hello'; // Si pas d'image, afficher "hello"
+            }
+        } catch (error) {
+            console.error("Erreur lors de la récupération de l'image Wikipedia:", error);
+            displayedLabel = 'hello'; // Fallback en cas d'erreur
+        }
+    }
 
     if (d.type === 'actor') {
         console.log(`Fetching movies for actor: ${d.id}`);
@@ -696,7 +723,7 @@ async function handleClick(event, d) {
         Swal.fire({
             title: "Entrez le nom de l'acteur/actrice",
             html: `
-            ${truncatedMaskedLabel}
+            ${displayedLabel}
             
         `,
             input: 'text',
@@ -738,7 +765,7 @@ async function handleClick(event, d) {
         Swal.fire({
             title: "Entrez le nom du film",
             html: `
-            ${truncatedMaskedLabel}
+            ${displayedLabel}
             
         `,
             input: 'text',
