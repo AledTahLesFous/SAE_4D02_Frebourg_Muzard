@@ -153,87 +153,7 @@ function updateText(nodeId, newLabel) {
         .filter(d => d.id === nodeId) // Sélectionne uniquement le texte du bon nœud
         .text(newLabel); // Met à jour avec le bon nom
 }
-// Modification de la fonction handleClick pour les acteurs et les films
-async function handleClick(event, d) {
-    console.log("Clicked node:", d);
 
-    if (d.type === 'actor') {
-        console.log(`Fetching movies for actor: ${d.id}`);
-        const actorData = await fetchData(`/api/actors/${d.id}/movies`);
-        console.log("Actor data:", actorData);
-
-        Swal.fire({
-            title: "Entrez le nom de l'acteur/actrice",
-            input: 'text',
-            inputPlaceholder: 'Nom',
-            showCancelButton: true,
-            confirmButtonText: 'Valider',
-            cancelButtonText: 'Annuler',
-            inputValidator: (value) => value ? null : 'Veuillez entrer un nom !'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const actorName = result.value;
-                if (actorName == d.label || actorName == 'a') {
-                    console.log("PASS");
-                    updateText(d.id, d.label);
-                    
-                    // Ajouter l'acteur à la liste des acteurs trouvés
-                    addActorToList(d.id, d.label);
-                    
-                    if (actorData && actorData.movies) {
-                        const newNodes = actorData.movies.map(movie => ({
-                            id: movie.id,
-                            label: movie.title,
-                            type: 'movie'
-                        }));
-                        addNodesAndLinks(d, newNodes);
-                        updateGraph();
-
-                    }
-                } else {
-                    Swal.fire(`ALed`);
-                }
-            }
-        });
-    } else if (d.type === 'movie') {
-        console.log(`Fetching actors for movie: ${d.id}`);
-        const movieData = await fetchData(`/api/movies/${d.id}/actors`);
-        console.log("Movie data:", movieData);
-
-        Swal.fire({
-            title: "Entrez le nom du film",
-            input: 'text',
-            inputPlaceholder: 'Nom du film',
-            showCancelButton: true,
-            confirmButtonText: 'Valider',
-            cancelButtonText: 'Annuler',
-            inputValidator: (value) => value ? null : 'Veuillez entrer un nom !'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const movieName = result.value;
-                if (movieName == d.label || movieName == "a") {
-                    updateText(d.id, d.label);
-                    
-                    // Maintenant qu'on a trouvé le film, on l'ajoute à la liste
-                    addMovieToList(d.id, d.label);
-                    
-                    if (movieData) {
-                        const newNodes = movieData.map(actor => ({
-                            id: actor.id,
-                            label: actor.name,
-                            type: 'actor'
-                        }));
-                        addNodesAndLinks(d, newNodes);
-                        updateGraph();
-
-                    }
-                } else {
-                    Swal.fire(`ALed`);
-                }
-            }
-        });
-    }
-}
 // Fonction de mise à jour des positions des nœuds à chaque tick de la simulation
 function ticked() {
     g.selectAll("line")
@@ -398,8 +318,6 @@ function updateFoundMoviesList() {
     }
 }
 
-
-// Nouvelle fonction pour ajouter des acteurs à la liste
 // Fonction pour ajouter des acteurs à la liste avec icône d'info
 function addActorToList(id, name) {
     if (!foundActorsSet.has(name)) {
@@ -530,9 +448,8 @@ async function redirectToMovie(id, title) {
         console.error("Erreur lors de la redirection vers le film:", error);
     }
 }
-// Nouvelle fonction pour rediriger vers un acteur
 
-// Fonction pour rediriger vers un acteur
+// Nouvelle fonction pour rediriger vers un acteur
 async function redirectToActor(id, name) {
     try {
         // Ajouter l'acteur au graphe s'il n'y est pas déjà
@@ -557,6 +474,7 @@ async function redirectToActor(id, name) {
         console.error("Erreur lors de la redirection vers l'acteur:", error);
     }
 }
+
 // Fonction de recherche modifiée pour prendre en compte les acteurs
 async function searchEntity() {
     const searchTerm = document.getElementById('search-input').value.trim();
@@ -601,8 +519,10 @@ async function searchEntity() {
     // Si ni film ni acteur n'a été trouvé dans les listes
     Swal.fire("Entité non trouvée", "Cette entité n'a pas encore été trouvée dans le graphe !", "error");
 }
+
 // Initialiser le graph avec un acteur de départ
 initializeGraph();
+
 // Ajouter l'événement de clic au bouton de recherche
 document.addEventListener('DOMContentLoaded', function() {
     // Vider les listes des films et acteurs trouvés au démarrage
@@ -758,3 +678,84 @@ document.getElementById('reset-button').addEventListener('click', () => {
     });
 });
 
+// Modification de la fonction handleClick pour les acteurs et les films
+async function handleClick(event, d) {
+    console.log("Clicked node:", d);
+
+    if (d.type === 'actor') {
+        console.log(`Fetching movies for actor: ${d.id}`);
+        const actorData = await fetchData(`/api/actors/${d.id}/movies`);
+        console.log("Actor data:", actorData);
+
+        Swal.fire({
+            title: "Entrez le nom de l'acteur/actrice",
+            input: 'text',
+            inputPlaceholder: 'Nom',
+            showCancelButton: true,
+            confirmButtonText: 'Valider',
+            cancelButtonText: 'Annuler',
+            inputValidator: (value) => value ? null : 'Veuillez entrer un nom !'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const actorName = result.value;
+                if (actorName == d.label || actorName == 'a') {
+                    console.log("PASS");
+                    updateText(d.id, d.label);
+                    
+                    // Ajouter l'acteur à la liste des acteurs trouvés
+                    addActorToList(d.id, d.label);
+                    
+                    if (actorData && actorData.movies) {
+                        const newNodes = actorData.movies.map(movie => ({
+                            id: movie.id,
+                            label: movie.title,
+                            type: 'movie'
+                        }));
+                        addNodesAndLinks(d, newNodes);
+                        updateGraph();
+
+                    }
+                } else {
+                    Swal.fire(`ALed`);
+                }
+            }
+        });
+    } else if (d.type === 'movie') {
+        console.log(`Fetching actors for movie: ${d.id}`);
+        const movieData = await fetchData(`/api/movies/${d.id}/actors`);
+        console.log("Movie data:", movieData);
+
+        Swal.fire({
+            title: "Entrez le nom du film",
+            input: 'text',
+            inputPlaceholder: 'Nom du film',
+            showCancelButton: true,
+            confirmButtonText: 'Valider',
+            cancelButtonText: 'Annuler',
+            inputValidator: (value) => value ? null : 'Veuillez entrer un nom !'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const movieName = result.value;
+                if (movieName == d.label || movieName == "a") {
+                    updateText(d.id, d.label);
+                    
+                    // Maintenant qu'on a trouvé le film, on l'ajoute à la liste
+                    addMovieToList(d.id, d.label);
+                    
+                    if (movieData) {
+                        const newNodes = movieData.map(actor => ({
+                            id: actor.id,
+                            label: actor.name,
+                            type: 'actor'
+                        }));
+                        addNodesAndLinks(d, newNodes);
+                        updateGraph();
+
+                    }
+                } else {
+                    Swal.fire(`ALed`);
+                }
+            }
+        });
+    }
+}
