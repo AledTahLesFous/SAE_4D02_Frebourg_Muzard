@@ -682,6 +682,9 @@ document.getElementById('reset-button').addEventListener('click', () => {
 async function handleClick(event, d) {
     console.log("Clicked node:", d);
 
+    const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 100); // Limite à 10 caractères et remplace des lettres aléatoires par "_"
+
+
     if (d.type === 'actor') {
         console.log(`Fetching movies for actor: ${d.id}`);
         const actorData = await fetchData(`/api/actors/${d.id}/movies`);
@@ -689,6 +692,10 @@ async function handleClick(event, d) {
 
         Swal.fire({
             title: "Entrez le nom de l'acteur/actrice",
+            html: `
+            ${truncatedMaskedLabel}
+            
+        `,
             input: 'text',
             inputPlaceholder: 'Nom',
             showCancelButton: true,
@@ -727,6 +734,10 @@ async function handleClick(event, d) {
 
         Swal.fire({
             title: "Entrez le nom du film",
+            html: `
+            ${truncatedMaskedLabel}
+            
+        `,
             input: 'text',
             inputPlaceholder: 'Nom du film',
             showCancelButton: true,
@@ -758,4 +769,26 @@ async function handleClick(event, d) {
             }
         });
     }
+}
+
+function truncateAndMaskLabel(label, maxLength) {
+    if (label.length > maxLength) {
+        // Limiter la longueur du label
+        label = label.slice(0, maxLength);
+    }
+
+    // Convertir le label en un tableau de caractères
+    const labelArray = [...label];
+    
+    // Déterminer combien de caractères seront remplacés par des underscores
+    const numToReplace = Math.floor(label.length / 2); // Par exemple, remplacer la moitié des caractères
+
+    // Remplacer des caractères aléatoires par des underscores
+    for (let i = 0; i < numToReplace; i++) {
+        const randomIndex = Math.floor(Math.random() * labelArray.length);
+        labelArray[randomIndex] = '_'; // Remplacer par un underscore
+    }
+
+    // Reconstituer le label à partir du tableau modifié
+    return labelArray.join('');
 }
