@@ -63,8 +63,6 @@ async function fetchData(endpoint) {
         console.error(error);
     }
 }
- // Charger le graphe sauvegardé
-
 // Fonction d'initialisation du graph avec un seul acteur
 async function initializeGraph() {
     const actorData = await fetchData("http://localhost:3000/api/actors/actor_1/movies");
@@ -76,10 +74,7 @@ async function initializeGraph() {
         updateGraph(); // Afficher seulement l'acteur au départ
     }
 }
-
 // Modification de la fonction addNodesAndLinks
-
-
 function addNodesAndLinks(sourceNode, newNodes) {
     newNodes.forEach(node => {
         let existingNode = nodes.find(n => n.id === node.id);
@@ -153,22 +148,11 @@ function updateGraph() {
 
 }
 
-
-
-
-
-
-
-
-
-
-
 function updateText(nodeId, newLabel) {
     g.selectAll("text")
         .filter(d => d.id === nodeId) // Sélectionne uniquement le texte du bon nœud
         .text(newLabel); // Met à jour avec le bon nom
 }
-
 // Modification de la fonction handleClick pour les acteurs et les films
 async function handleClick(event, d) {
     console.log("Clicked node:", d);
@@ -250,7 +234,6 @@ async function handleClick(event, d) {
         });
     }
 }
-
 // Fonction de mise à jour des positions des nœuds à chaque tick de la simulation
 function ticked() {
     g.selectAll("line")
@@ -267,7 +250,6 @@ function ticked() {
         .attr("x", d => d.x)
         .attr("y", d => d.y);
 }
-
 // Fonction pour ajouter des films à la liste
 function addMovieToList(id, title) {
     if (!foundMoviesSet.has(title)) {
@@ -289,7 +271,6 @@ function addMovieToList(id, title) {
         saveGraphToLocalStorage();
     }
 }
-
 function updateFoundMoviesList() {
     const moviesList = document.getElementById('found-movies');
     if (moviesList) {
@@ -304,7 +285,6 @@ function updateFoundMoviesList() {
         });
     }
 }
-
 
 // Nouvelle fonction pour ajouter des acteurs à la liste
 function addActorToList(id, name) {
@@ -343,7 +323,6 @@ function updateFoundActorsList() {
     }
 }
 
-
 function highlightNode(node) {
     // Réinitialisation des styles
     g.selectAll("circle")
@@ -367,7 +346,6 @@ function highlightNode(node) {
         .duration(500)
         .call(zoom.transform, d3.zoomIdentity.translate(newX, newY).scale(transform.k));
 }
-
 // Fonction pour rediriger vers un film
 async function redirectToMovie(id, title) {
     try {
@@ -394,7 +372,6 @@ async function redirectToMovie(id, title) {
         console.error("Erreur lors de la redirection vers le film:", error);
     }
 }
-
 // Nouvelle fonction pour rediriger vers un acteur
 async function redirectToActor(id, name) {
     try {
@@ -420,7 +397,6 @@ async function redirectToActor(id, name) {
         console.error("Erreur lors de la redirection vers l'acteur:", error);
     }
 }
-
 // Fonction de recherche modifiée pour prendre en compte les acteurs
 async function searchEntity() {
     const searchTerm = document.getElementById('search-input').value.trim();
@@ -465,10 +441,8 @@ async function searchEntity() {
     // Si ni film ni acteur n'a été trouvé dans les listes
     Swal.fire("Entité non trouvée", "Cette entité n'a pas encore été trouvée dans le graphe !", "error");
 }
-
 // Initialiser le graph avec un acteur de départ
 initializeGraph();
-
 // Ajouter l'événement de clic au bouton de recherche
 document.addEventListener('DOMContentLoaded', function() {
     // Vider les listes des films et acteurs trouvés au démarrage
@@ -521,9 +495,6 @@ function saveGraphToLocalStorage() {
     console.log("Graph saved to localStorage.");
     console.log(graphData.foundActors);
 }
-
-
-
 
 function loadGraphFromLocalStorage() {
     const savedData = localStorage.getItem("graphData");
@@ -585,13 +556,6 @@ function loadGraphFromLocalStorage() {
         console.log("No graph data found in localStorage.");
     }
 }
-
-
-
-
-
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
     // Vérifie si des données sont présentes dans le localStorage
