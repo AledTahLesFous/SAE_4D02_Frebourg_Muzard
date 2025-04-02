@@ -765,28 +765,41 @@ async function handleClick(event, d) {
     const randomChoice = Math.random();
     let displayedLabel;
 
-    if (randomChoice < 0) {
-        displayedLabel = 'aled'; // 33% de chances d'afficher "aled"
-    } else if (randomChoice < 0) {
+    if (randomChoice < 0.33) {
+        try {
+            const wikiData = await getWikipediaInfo(d.label, d.type);
+            if (wikiData && wikiData.extract) {
+                displayedLabel = `<p style="text-align: justify;">${wikiData.extract}</p>`;
+            } else {
+                displayedLabel = "Synopsis indisponible.";
+            }
+        } catch (error) {
+            console.error("Erreur lors de la récupération du synopsis Wikipedia:", error);
+            displayedLabel = "Impossible de récupérer le synopsis.";
+        }
+    } else if (randomChoice < 0.66) {
         displayedLabel = truncatedMaskedLabel; // 33% de chances d'afficher le label tronqué et masqué
     } else {
         // 34% de chances d'afficher l'image Wikipedia
         try {
             const wikiData = await getWikipediaInfo(d.label, d.type);
+            
             if (wikiData && wikiData.thumbnail) {
+                const croppedImage = await cropImage(wikiData.thumbnail, 100); // 100x100 crop
+        
                 displayedLabel = `
                     <div style="text-align: center;">
-                        <img src="${wikiData.thumbnail}" alt="${d.label}" style="max-width: 120px; border-radius: 8px;">
-                        <p>${wikiData.title || d.label}</p>
+                        <img src="${croppedImage}" alt="${d.label}" style="max-width: 120px; border-radius: 8px;">
                     </div>
                 `;
             } else {
-                displayedLabel = 'hello'; // Si pas d'image, afficher "hello"
+                displayedLabel = "Pas d'image"; // Si pas d'image, afficher un texte
             }
         } catch (error) {
             console.error("Erreur lors de la récupération de l'image Wikipedia:", error);
-            displayedLabel = 'hello'; // Fallback en cas d'erreur
+            displayedLabel = "Erreur lors du chargement de l'image";
         }
+        
     }
 
     if (d.type === 'actor') {
@@ -900,3 +913,33 @@ function truncateAndMaskLabel(label, maxLength) {
     // Reconstituer le label à partir du tableau modifié
     return labelArray.join('');
 }
+
+function cropImage(imageUrl, cropSize = 80) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous"; // Évite les erreurs CORS
+        img.src = imageUrl;
+
+        img.onload = function () {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            // Position aléatoire dans l'image
+            const x = Math.random() * (img.width - cropSize);
+            const y = Math.random() * (img.height - cropSize);
+
+            // Configurer le canvas pour la découpe
+            canvas.width = cropSize;
+            canvas.height = cropSize;
+            
+            // Dessiner seulement un fragment de l'image
+            ctx.drawImage(img, x, y, cropSize, cropSize, 0, 0, cropSize, cropSize);
+
+            // Convertir en Data URL et retourner l'image recadrée
+            resolve(canvas.toDataURL());
+        };
+
+        img.onerror = () => reject("Erreur de chargement de l'image");
+    });
+}
+
