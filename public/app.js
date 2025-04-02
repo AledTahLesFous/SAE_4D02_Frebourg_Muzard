@@ -63,15 +63,26 @@ async function fetchData(endpoint) {
         console.error(error);
     }
 }
-// Fonction d'initialisation du graph avec un seul acteur
+// Fonction d'initialisation du graph avec un seul acteur aléatoire
 async function initializeGraph() {
-    const actorData = await fetchData("http://localhost:3000/api/actors/actor_1/movies");
-    // mettre le random ici à la place d'un acteur en précis 
-
-    if (actorData && !nodes.find(node => node.id === actorData.id)) {
-        // Ajouter uniquement l'acteur initial s'il n'est pas déjà dans le graphe
-        let initialNode = { id: actorData.id, label: actorData.name, x: center.x, y: center.y, type: 'actor' };
+    // Récupérer un acteur aléatoire au lieu d'un acteur fixe
+    const randomActor = await fetchData("http://localhost:3000/api/actors/random");
+    
+    if (randomActor && !nodes.find(node => node.id === randomActor.id)) {
+        // Ajouter l'acteur aléatoire au graphe avec la propriété found à false
+        let initialNode = { 
+            id: randomActor.id, 
+            label: randomActor.name, 
+            x: center.x, 
+            y: center.y, 
+            type: 'actor',
+            found: false // Marquer comme non découvert
+        };
         nodes.push(initialNode);
+        
+        // Ne pas ajouter l'acteur à l'ensemble des acteurs trouvés
+        // foundActorsSet.add(randomActor.name);
+        
         updateGraph(); // Afficher seulement l'acteur au départ
     }
 }
@@ -132,7 +143,19 @@ function updateGraph() {
         const textEnter = text.enter().append("text")
             .attr("dx", 12)
             .attr("dy", 4)
-            .text(d => d.found ? d.label : "?") // Utiliser le label mis à jour ici
+            .text(d => {
+                // Vérifier si l'acteur ou le film a été découvert
+                if (d.type === 'actor' && foundActorsSet.has(d.label)) {
+                    return d.label;
+                } else if (d.type === 'movie' && foundMoviesSet.has(d.label)) {
+                    return d.label;
+                } else if (d.found === true) {
+                    // Pour la compatibilité avec les données existantes
+                    return d.label;
+                } else {
+                    return "?";
+                }
+            })
             .merge(text)
             .attr("x", d => d.x)
             .attr("y", d => d.y);
@@ -523,8 +546,7 @@ async function searchEntity() {
     Swal.fire("Entité non trouvée", "Cette entité n'a pas encore été trouvée dans le graphe !", "error");
 }
 
-// Initialiser le graph avec un acteur de départ
-initializeGraph();
+// L'initialisation du graphe est maintenant gérée dans l'événement DOMContentLoaded
 
 // Ajouter l'événement de clic au bouton de recherche
 document.addEventListener('DOMContentLoaded', function() {
@@ -609,9 +631,13 @@ function loadGraphFromLocalStorage() {
 
         // Charger les nœuds
         graphData.nodes.forEach(n => {
-            // Ajouter le nœud au graphe sans modifier le label
+            // Ajouter le nœud au graphe en vérifiant si l'acteur/film a été découvert
+            const isFound = (n.type === 'actor' && foundActorsSet.has(n.label)) || 
+                          (n.type === 'movie' && foundMoviesSet.has(n.label));
+            
             nodes.push({
-                ...n, // Conserve les propriétés d'origine, y compris le label
+                ...n, // Conserve les propriétés d'origine
+                found: isFound // Met à jour la propriété found en fonction des ensembles
             });
         });
 
@@ -674,10 +700,12 @@ document.getElementById('reset-button').addEventListener('click', () => {
             // Mise à jour du graphe (efface tout)
             updateGraph();
 
+            // Initialiser avec un nouvel acteur aléatoire
+            initializeGraph();
+
             // Notification de succès
             Swal.fire("Réinitialisé !", "Le graphe a été réinitialisé.", "success");
         }
-        initializeGraph();
     });
 });
 
@@ -685,8 +713,35 @@ document.getElementById('reset-button').addEventListener('click', () => {
 async function handleClick(event, d) {
     console.log("Clicked node:", d);
 
-    const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 100); // Limite à 10 caractères et remplace des lettres aléatoires par "_"
+    const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 10); // Tronquer et masquer le label
 
+    // Créer une liste avec les trois options possibles
+    const randomChoice = Math.random();
+    let displayedLabel;
+
+    if (randomChoice < 0) {
+        displayedLabel = 'aled'; // 33% de chances d'afficher "aled"
+    } else if (randomChoice < 0) {
+        displayedLabel = truncatedMaskedLabel; // 33% de chances d'afficher le label tronqué et masqué
+    } else {
+        // 34% de chances d'afficher l'image Wikipedia
+        try {
+            const wikiData = await getWikipediaInfo(d.label, d.type);
+            if (wikiData && wikiData.thumbnail) {
+                displayedLabel = `
+                    <div style="text-align: center;">
+                        <img src="${wikiData.thumbnail}" alt="${d.label}" style="max-width: 120px; border-radius: 8px;">
+                        <p>${wikiData.title || d.label}</p>
+                    </div>
+                `;
+            } else {
+                displayedLabel = 'hello'; // Si pas d'image, afficher "hello"
+            }
+        } catch (error) {
+            console.error("Erreur lors de la récupération de l'image Wikipedia:", error);
+            displayedLabel = 'hello'; // Fallback en cas d'erreur
+        }
+    }
 
     if (d.type === 'actor') {
         console.log(`Fetching movies for actor: ${d.id}`);
@@ -696,7 +751,7 @@ async function handleClick(event, d) {
         Swal.fire({
             title: "Entrez le nom de l'acteur/actrice",
             html: `
-            ${truncatedMaskedLabel}
+            ${displayedLabel}
             
         `,
             input: 'text',
@@ -710,6 +765,8 @@ async function handleClick(event, d) {
                 const actorName = result.value;
                 if (actorName == d.label || actorName == 'a') {
                     console.log("PASS");
+                    // Marquer l'acteur comme trouvé
+                    d.found = true;
                     updateText(d.id, d.label);
                     
                     // Ajouter l'acteur à la liste des acteurs trouvés
@@ -738,7 +795,7 @@ async function handleClick(event, d) {
         Swal.fire({
             title: "Entrez le nom du film",
             html: `
-            ${truncatedMaskedLabel}
+            ${displayedLabel}
             
         `,
             input: 'text',
@@ -751,6 +808,8 @@ async function handleClick(event, d) {
             if (result.isConfirmed) {
                 const movieName = result.value;
                 if (movieName == d.label || movieName == "a") {
+                    // Marquer le film comme trouvé
+                    d.found = true;
                     updateText(d.id, d.label);
                     
                     // Maintenant qu'on a trouvé le film, on l'ajoute à la liste
