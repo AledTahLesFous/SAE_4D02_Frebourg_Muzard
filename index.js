@@ -10,6 +10,7 @@ require("./src/sgbd/models.js");
 const routerActors = require("./src/routes/actors.js");
 const movieRouter = require("./src/routes/movie.js"); // Assuming the file is named `movie.js`
 const searchRoutes = require("./src/routes/recherche.js"); // Import des routes de recherche
+const wikipediaRoutes = require("./src/routes/wikipedia.js"); // Nouvelle route pour Wikipedia
 
 
 const app = express();
@@ -28,7 +29,7 @@ app.get("/", (req, res) => {
 app.use("/", searchRoutes);
 app.use("/", routerActors);
 app.use("/", movieRouter); // Use the movie router for routes under "/movies"
-
+app.use("/", wikipediaRoutes);
 
 const PORT = process.env.PORT || 3000;
 
