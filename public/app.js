@@ -78,6 +78,12 @@ async function initializeGraph() {
             type: 'actor',
             found: false // Marquer comme non découvert
         };
+    const actorData = await fetchData("http://localhost:3000/api/actors/actor_1/movies");
+    // mettre le random ici à la place d'un acteur en précis 
+
+    if (actorData && !nodes.find(node => node.id === actorData.id)) {
+        // Ajouter uniquement l'acteur initial s'il n'est pas déjà dans le graphe
+        let initialNode = { id: actorData.id, label: actorData.name, x: center.x, y: center.y, type: 'actor' };
         nodes.push(initialNode);
         
         // Ne pas ajouter l'acteur à l'ensemble des acteurs trouvés
@@ -742,6 +748,8 @@ async function handleClick(event, d) {
             displayedLabel = 'hello'; // Fallback en cas d'erreur
         }
     }
+    const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 100); // Limite à 10 caractères et remplace des lettres aléatoires par "_"
+
 
     if (d.type === 'actor') {
         console.log(`Fetching movies for actor: ${d.id}`);
@@ -752,6 +760,7 @@ async function handleClick(event, d) {
             title: "Entrez le nom de l'acteur/actrice",
             html: `
             ${displayedLabel}
+            ${truncatedMaskedLabel}
             
         `,
             input: 'text',
@@ -796,6 +805,7 @@ async function handleClick(event, d) {
             title: "Entrez le nom du film",
             html: `
             ${displayedLabel}
+            ${truncatedMaskedLabel}
             
         `,
             input: 'text',
