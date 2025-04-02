@@ -66,6 +66,7 @@ async function fetchData(endpoint) {
 // Fonction d'initialisation du graph avec un seul acteur
 async function initializeGraph() {
     const actorData = await fetchData("http://localhost:3000/api/actors/actor_1/movies");
+    // mettre le random ici à la place d'un acteur en précis 
 
     if (actorData && !nodes.find(node => node.id === actorData.id)) {
         // Ajouter uniquement l'acteur initial s'il n'est pas déjà dans le graphe
@@ -74,6 +75,8 @@ async function initializeGraph() {
         updateGraph(); // Afficher seulement l'acteur au départ
     }
 }
+
+
 // Modification de la fonction addNodesAndLinks
 function addNodesAndLinks(sourceNode, newNodes) {
     newNodes.forEach(node => {
