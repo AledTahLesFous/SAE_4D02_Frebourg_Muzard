@@ -63,18 +63,22 @@ async function fetchData(endpoint) {
         console.error(error);
     }
 }
+ // Charger le graphe sauvegardé
 
 // Fonction d'initialisation du graph avec un seul acteur
 async function initializeGraph() {
     const actorData = await fetchData("http://localhost:3000/api/actors/actor_1/movies");
 
-    if (actorData) {
-        // Ajouter uniquement l'acteur initial au graphe
+    if (actorData && !nodes.find(node => node.id === actorData.id)) {
+        // Ajouter uniquement l'acteur initial s'il n'est pas déjà dans le graphe
         let initialNode = { id: actorData.id, label: actorData.name, x: center.x, y: center.y, type: 'actor' };
         nodes.push(initialNode);
         updateGraph(); // Afficher seulement l'acteur au départ
     }
 }
+
+// Modification de la fonction addNodesAndLinks
+
 
 function addNodesAndLinks(sourceNode, newNodes) {
     newNodes.forEach(node => {
@@ -109,7 +113,6 @@ function addNodesAndLinks(sourceNode, newNodes) {
     });
 }
 
-// Fonction pour mettre à jour le graphique
 function updateGraph() {
     const link = g.selectAll("line").data(links);
     link.enter().append("line").merge(link).attr("stroke", "#aaa");
@@ -118,32 +121,47 @@ function updateGraph() {
     const node = g.selectAll("circle").data(nodes, d => d.id);
     const nodeEnter = node.enter().append("circle")
         .attr("r", 10)
-        .attr("fill", d => d.type === 'actor' ? "magenta" : d.type === 'movie' ? "pink" : "gray")
+        .attr("fill", d => d.type === 'actor' ? "magenta" : "pink")
         .on("click", handleClick)
-        .call(drag); // Appliquer le drag aux nœuds
-
+        .call(drag);
     node.exit().remove();
 
     nodeEnter.merge(node)
         .attr("cx", d => d.x)
         .attr("cy", d => d.y);
 
-    // Ajouter les labels (textes)
-    const text = g.selectAll("text").data(nodes, d => d.id);
-    const textEnter = text.enter().append("text")
-        .attr("dx", 12)
-        .attr("dy", 4)
-        .text("?") // Les films affichent "?"
-        .merge(text)
-        .attr("x", d => d.x)
-        .attr("y", d => d.y);
+        const text = g.selectAll("text").data(nodes, d => d.id);
+        const textEnter = text.enter().append("text")
+            .attr("dx", 12)
+            .attr("dy", 4)
+            .text(d => d.found ? d.label : "?") // Utiliser le label mis à jour ici
+            .merge(text)
+            .attr("x", d => d.x)
+            .attr("y", d => d.y);
+        
+
+
+
         
     text.exit().remove();
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
     simulation.alpha(1).restart();
+
+    saveGraphToLocalStorage() 
+
 }
+
+
+
+
+
+
+
+
+
+
 
 function updateText(nodeId, newLabel) {
     g.selectAll("text")
@@ -186,6 +204,7 @@ async function handleClick(event, d) {
                         }));
                         addNodesAndLinks(d, newNodes);
                         updateGraph();
+
                     }
                 } else {
                     Swal.fire(`ALed`);
@@ -222,6 +241,7 @@ async function handleClick(event, d) {
                         }));
                         addNodesAndLinks(d, newNodes);
                         updateGraph();
+
                     }
                 } else {
                     Swal.fire(`ALed`);
@@ -266,8 +286,25 @@ function addMovieToList(id, title) {
         });
 
         moviesList.appendChild(listItem);
+        saveGraphToLocalStorage();
     }
 }
+
+function updateFoundMoviesList() {
+    const moviesList = document.getElementById('found-movies');
+    if (moviesList) {
+        // Vider la liste des films avant de la remplir
+        moviesList.innerHTML = ''; 
+
+        // Ajouter les films trouvés à la liste
+        foundMoviesSet.forEach(movie => {
+            const listItem = document.createElement('li');
+            listItem.textContent = movie;
+            moviesList.appendChild(listItem);
+        });
+    }
+}
+
 
 // Nouvelle fonction pour ajouter des acteurs à la liste
 function addActorToList(id, name) {
@@ -287,8 +324,25 @@ function addActorToList(id, name) {
         });
 
         actorsList.appendChild(listItem);
+        saveGraphToLocalStorage();
     }
 }
+
+function updateFoundActorsList() {
+    const actorsList = document.getElementById('found-actors');
+    if (actorsList) {
+        // Vider la liste des acteurs avant de la remplir
+        actorsList.innerHTML = ''; 
+
+        // Ajouter les acteurs trouvés à la liste
+        foundActorsSet.forEach(actor => {
+            const listItem = document.createElement('li');
+            listItem.textContent = actor;
+            actorsList.appendChild(listItem);
+        });
+    }
+}
+
 
 function highlightNode(node) {
     // Réinitialisation des styles
@@ -331,6 +385,7 @@ async function redirectToMovie(id, title) {
             const newNodes = movieData.map(actor => ({ id: actor.id, label: actor.name, type: 'actor' }));
             addNodesAndLinks(movieNode, newNodes);
             updateGraph();
+
         }
         
         // Mettre en évidence le film
@@ -441,4 +496,141 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+});
+
+function saveGraphToLocalStorage() {
+    const graphData = {
+        nodes: nodes.map(n => ({
+            id: n.id,
+            label: n.label,
+            type: n.type,
+            x: n.x,
+            y: n.y,
+            found: foundMoviesSet.has(n.label) || foundActorsSet.has(n.label), // Vérification si trouvé
+        })),
+        links: links.map(l => ({
+            source: l.source.id,
+            target: l.target.id,
+        })),
+        foundMovies: Array.from(foundMoviesSet), // Ajouter les films trouvés
+        foundActors: Array.from(foundActorsSet), // Ajouter les acteurs trouvés
+    };
+
+    // Sauvegarde dans le localStorage
+    localStorage.setItem("graphData", JSON.stringify(graphData));
+    console.log("Graph saved to localStorage.");
+    console.log(graphData.foundActors);
+}
+
+
+
+
+function loadGraphFromLocalStorage() {
+    const savedData = localStorage.getItem("graphData");
+
+    if (savedData) {
+        const graphData = JSON.parse(savedData);
+        
+        // Réinitialiser les ensembles trouvés avant de charger les données
+        foundMoviesSet.clear();
+        foundActorsSet.clear();
+
+        // Ajouter les films et acteurs trouvés aux ensembles
+        if (graphData.foundMovies) {
+            graphData.foundMovies.forEach(movie => foundMoviesSet.add(movie));
+        }
+        if (graphData.foundActors) {
+            graphData.foundActors.forEach(actor => foundActorsSet.add(actor));
+        }
+
+        // Réinitialisation des nœuds et des liens
+        nodes = [];
+        links = [];
+
+// Charger les nœuds
+        graphData.nodes.forEach(n => {
+            // Si l'acteur ou le film a été trouvé, on l'ajoute aux ensembles appropriés
+            if (n.found) {
+                if (n.type === 'movie') {
+                    foundMoviesSet.add(n.label);
+                } else if (n.type === 'actor') {
+                    foundActorsSet.add(n.label);
+                }
+            }
+
+            // Ajouter le nœud au graphe
+            // Remplace "?" par le label réel si l'acteur/film a été trouvé
+            nodes.push({
+                ...n,
+                label: n.found ? n.label : "?" // Ne mettre "?" que si le nœud n'a pas été trouvé
+            });
+        });
+
+
+        // Charger les liens
+        links = graphData.links.map(l => ({
+            source: nodes.find(n => n.id === l.source),
+            target: nodes.find(n => n.id === l.target),
+        }));
+
+        // Mettre à jour le graphe après avoir chargé les données
+        updateGraph();
+
+        // Mettre à jour les listes d'acteurs et de films dans le HTML
+        updateFoundMoviesList();
+        updateFoundActorsList();
+
+        console.log("Graph loaded from localStorage.");
+    } else {
+        console.log("No graph data found in localStorage.");
+    }
+}
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Vérifie si des données sont présentes dans le localStorage
+    if (localStorage.getItem("graphData")) {
+        // Charge le graphe à partir du localStorage
+        loadGraphFromLocalStorage();
+        console.log("LC")
+    } else {
+        // Si aucune donnée n'est trouvée, initialise un graphe de départ
+        initializeGraph();
+    }
+});
+
+document.getElementById('reset-button').addEventListener('click', () => {
+    Swal.fire({
+        title: "Êtes-vous sûr ?",
+        text: "Cela supprimera toutes les données enregistrées !",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Oui, réinitialiser",
+        cancelButtonText: "Annuler"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Suppression des données dans localStorage
+            localStorage.removeItem("graphData");
+
+            // Réinitialisation des ensembles de films et d'acteurs trouvés
+            foundMoviesSet.clear();
+            foundActorsSet.clear();
+
+            // Réinitialisation des nœuds et des liens
+            nodes = [];
+            links = [];
+
+            // Mise à jour du graphe (efface tout)
+            updateGraph();
+
+            // Notification de succès
+            Swal.fire("Réinitialisé !", "Le graphe a été réinitialisé.", "success");
+        }
+    });
 });
