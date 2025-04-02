@@ -348,6 +348,9 @@ function updateFoundMoviesList() {
             moviesList.appendChild(listItem);
         });
     }
+    
+    // Mettre à jour les statistiques
+    updateStats();
 }
 
 function updateFoundActorsList() {
@@ -389,6 +392,9 @@ function updateFoundActorsList() {
             actorsList.appendChild(listItem);
         });
     }
+    
+    // Mettre à jour les statistiques
+    updateStats();
 }       
 
 function highlightNode(node) {
@@ -526,6 +532,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (actorsList) {
         actorsList.innerHTML = ''; // Réinitialiser le contenu de la liste
     }
+    
+    // Charger les données du graphe depuis le localStorage
+    loadGraphFromLocalStorage();
+    
+    // Mettre à jour les statistiques
+    updateStats();
 
     const searchButton = document.getElementById('search-button');
     if (searchButton) {
@@ -542,6 +554,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Fonction pour mettre à jour les statistiques
+async function updateStats() {
+    try {
+        // Récupérer les statistiques depuis l'API
+        const stats = await fetchData('/api/stats');
+        
+        if (stats) {
+            // Mettre à jour le nombre total d'acteurs et de films
+            document.getElementById('total-actors-count').textContent = stats.actors;
+            document.getElementById('total-movies-count').textContent = stats.movies;
+            
+            // Calculer le pourcentage d'acteurs et de films trouvés
+            const foundActorsCount = foundActorsSet.size;
+            const foundMoviesCount = foundMoviesSet.size;
+            
+            // Mettre à jour les compteurs d'éléments trouvés
+            document.getElementById('found-actors-count').textContent = foundActorsCount;
+            document.getElementById('found-movies-count').textContent = foundMoviesCount;
+            
+            // Calculer et mettre à jour les barres de progression
+            const actorsProgressPercent = (foundActorsCount / stats.actors) * 100;
+            const moviesProgressPercent = (foundMoviesCount / stats.movies) * 100;
+            
+            document.getElementById('actors-progress').style.width = `${actorsProgressPercent}%`;
+            document.getElementById('movies-progress').style.width = `${moviesProgressPercent}%`;
+        }
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour des statistiques:', error);
+    }
+}
 
 function saveGraphToLocalStorage() {
     // Créer un tableau pour les nœuds avec leurs labels actuels
@@ -571,6 +614,9 @@ function saveGraphToLocalStorage() {
     localStorage.setItem("graphData", JSON.stringify(graphData));
     console.log("Graph saved to localStorage.");
     console.log(graphData.foundActors);
+    
+    // Mettre à jour les statistiques après avoir sauvegardé
+    updateStats();
 }
 
 function loadGraphFromLocalStorage() {
