@@ -294,7 +294,31 @@
         }
         #chrono-container {
             display: flex;
-            flex-direction: row-reverse;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        #chrono {
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            padding: 15px;
+            margin: 0;
+            max-width: 300px;
+            border-radius: 10px;
+            position: relative;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        #preview_gif {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+        
+        #meme-container {
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -302,7 +326,6 @@
     <h1>Cinememe</h1>
     <div id="chrono-container">
         <div id="chrono"><i class="fas fa-stopwatch"></i> Temps restant: 0s</div>
-        <img id="preview_gif" alt="Meme preview" />
     </div>
     <div class="main-container">
         <!-- Panneau de statistiques (gauche) -->
@@ -381,6 +404,10 @@
                 </ul>
                 <h3>Acteurs trouvés</h3>
                 <ul id="found-actors"></ul>
+                
+                <div id="meme-container">
+                    <img id="preview_gif" alt="Meme preview" />
+                </div>
             </div>
         </div>
     </div>
