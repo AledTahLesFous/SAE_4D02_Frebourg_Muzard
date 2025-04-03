@@ -292,13 +292,18 @@
             margin-top: 15px;
             margin-bottom: 5px;
         }
+        #chrono-container {
+            display: flex;
+            flex-direction: row-reverse;
+        }
     </style>
 </head>
 <body>
     <h1>Cinememe</h1>
-    <div id="chrono" style="display: block;"><i class="fas fa-stopwatch"></i> Temps restant: 0s</div>
-    <img id="preview_gif" alt="Meme preview" />
-
+    <div id="chrono-container">
+        <div id="chrono"><i class="fas fa-stopwatch"></i> Temps restant: 0s</div>
+        <img id="preview_gif" alt="Meme preview" />
+    </div>
     <div class="main-container">
         <!-- Panneau de statistiques (gauche) -->
         <div id="stats-panel">

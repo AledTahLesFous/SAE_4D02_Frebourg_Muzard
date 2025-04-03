@@ -948,6 +948,8 @@ async function handleClick(event, d) {
             if (result.isConfirmed) {
                 const actorName = result.value;
                 if (actorName == d.label || actorName == 'a') {
+                    grab_data();
+
                     // Marquer l'acteur comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
@@ -990,6 +992,7 @@ async function handleClick(event, d) {
             if (result.isConfirmed) {
                 const movieName = result.value;
                 if (movieName == d.label || movieName == "a") {
+                    grab_data();
                     // Marquer le film comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
