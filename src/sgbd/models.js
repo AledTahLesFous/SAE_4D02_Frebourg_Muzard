@@ -101,5 +101,9 @@ Actors.belongsToMany(Movies, { through: MoviesActor, foreignKey: "id_actor" });
 
 Movies.belongsToMany(Genres, { through: MoviesGenre, foreignKey: "id_movie" });
 Genres.belongsToMany(Movies, { through: MoviesGenre, foreignKey: "id_genre" });
+MoviesGenre.belongsTo(Genres, { foreignKey: 'id_genre' });
+
+Movies.belongsToMany(Genres, { through: MoviesGenre, foreignKey: "id_movie" });
+Genres.belongsToMany(Movies, { through: MoviesGenre, foreignKey: "id_genre" });
 
 module.exports = { Actors, Movies, MoviesActor, MoviesGenre, Genres };

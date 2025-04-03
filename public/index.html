@@ -270,6 +270,8 @@
 </head>
 <body>
     <h1>Actor and Movies Graph</h1>
+    <div id="chrono" style="display: block;">Temps restant: 0s</div>
+
     <div class="main-container">
         <!-- Panneau de statistiques (gauche) -->
         <div id="stats-panel">
@@ -291,6 +293,38 @@
                     <div class="stat-label">sur <span id="total-actors-count">?</span> acteurs</div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="actors-progress"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistiques détaillées -->
+            <h3>Statistiques détaillées</h3>
+            <div class="stats-container">
+                <!-- Nombre total de genres -->
+                <div class="stat-item">
+                    <div class="stat-label">Nombre total de genres</div>
+                    <div class="stat-value" id="total-genres">?</div>
+                </div>
+                
+                <!-- Films par genre -->
+                <div class="stat-item">
+                    <div class="stat-label">Films par genre</div>
+                    <div id="movies-by-genre" style="height: 150px; overflow-y: auto;">
+                        <div class="loading-message">Chargement...</div>
+                    </div>
+                </div>
+                
+                <!-- Nombre moyen d'acteurs par film -->
+                <div class="stat-item">
+                    <div class="stat-label">Acteurs par film (moyenne)</div>
+                    <div class="stat-value" id="avg-actors-per-movie">?</div>
+                </div>
+                
+                <!-- Films par année -->
+                <div class="stat-item">
+                    <div class="stat-label">Films par année</div>
+                    <div id="movies-by-year" style="height: 150px; overflow-y: auto;">
+                        <div class="loading-message">Chargement...</div>
                     </div>
                 </div>
             </div>

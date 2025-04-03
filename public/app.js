@@ -200,7 +200,6 @@ function ticked() {
 
 async function getWikipediaInfo(title, type) {
     try {
-        console.log(`Recherche d'informations pour ${title} (type: ${type})`);
         
         // URL complète
         const response = await fetch(`/api/wikipedia?title=${encodeURIComponent(title)}&type=${type}`);
@@ -592,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Fonction pour mettre à jour les statistiques
 async function updateStats() {
     try {
-        // Récupérer les statistiques depuis l'API
+        // Récupérer les statistiques de base depuis l'API
         const stats = await fetchData('/api/stats');
         
         if (stats) {
@@ -614,6 +613,91 @@ async function updateStats() {
             
             document.getElementById('actors-progress').style.width = `${actorsProgressPercent}%`;
             document.getElementById('movies-progress').style.width = `${moviesProgressPercent}%`;
+        }
+        
+        // Récupérer les statistiques détaillées
+        const detailedStats = await fetchData('/api/stats/detailed');
+        
+        if (detailedStats) {
+            // Mettre à jour les statistiques détaillées
+            document.getElementById('avg-actors-per-movie').textContent = detailedStats.averageActorsPerMovie;
+            
+            // Mettre à jour le nombre total de genres
+            document.getElementById('total-genres').textContent = detailedStats.totalGenres || '?';
+            
+            // Mettre à jour les films par année
+            const moviesByYearContainer = document.getElementById('movies-by-year');
+            if (detailedStats.moviesByYear && detailedStats.moviesByYear.length > 0) {
+                // Vider le conteneur
+                moviesByYearContainer.innerHTML = '';
+                
+                // Créer une liste pour afficher les films par année
+                const yearList = document.createElement('ul');
+                yearList.style.listStyleType = 'none';
+                yearList.style.padding = '0';
+                yearList.style.margin = '0';
+                
+                // Ajouter chaque année avec son nombre de films
+                detailedStats.moviesByYear.forEach(item => {
+                    const yearItem = document.createElement('li');
+                    yearItem.style.display = 'flex';
+                    yearItem.style.justifyContent = 'space-between';
+                    yearItem.style.padding = '5px 0';
+                    yearItem.style.borderBottom = '1px solid #eee';
+                    
+                    const yearSpan = document.createElement('span');
+                    yearSpan.textContent = item.year;
+                    
+                    const countSpan = document.createElement('span');
+                    countSpan.textContent = item.count;
+                    countSpan.style.fontWeight = 'bold';
+                    
+                    yearItem.appendChild(yearSpan);
+                    yearItem.appendChild(countSpan);
+                    yearList.appendChild(yearItem);
+                });
+                
+                moviesByYearContainer.appendChild(yearList);
+            } else {
+                moviesByYearContainer.innerHTML = '<div>Aucune donnée disponible</div>';
+            }
+            
+            // Mettre à jour les films par genre
+            const moviesByGenreContainer = document.getElementById('movies-by-genre');
+            if (detailedStats.moviesByGenre && detailedStats.moviesByGenre.length > 0) {
+                // Vider le conteneur
+                moviesByGenreContainer.innerHTML = '';
+                
+                // Créer une liste pour afficher les films par genre
+                const genreList = document.createElement('ul');
+                genreList.style.listStyleType = 'none';
+                genreList.style.padding = '0';
+                genreList.style.margin = '0';
+                
+                // Ajouter chaque genre avec son nombre de films
+                detailedStats.moviesByGenre.forEach(item => {
+                    const genreItem = document.createElement('li');
+                    genreItem.style.display = 'flex';
+                    genreItem.style.justifyContent = 'space-between';
+                    genreItem.style.padding = '5px 0';
+                    genreItem.style.borderBottom = '1px solid #eee';
+                    
+                    const genreSpan = document.createElement('span');
+                    genreSpan.textContent = item.genre;
+                    
+                    const countSpan = document.createElement('span');
+                    countSpan.textContent = item.count;
+                    countSpan.style.fontWeight = 'bold';
+                    
+                    genreItem.appendChild(genreSpan);
+                    genreItem.appendChild(countSpan);
+                    genreList.appendChild(genreItem);
+                });
+                
+                moviesByGenreContainer.appendChild(genreList);
+            } else {
+                moviesByGenreContainer.innerHTML = '<div>Aucune donnée disponible</div>';
+            }
         }
     } catch (error) {
         console.error('Erreur lors de la mise à jour des statistiques:', error);
@@ -646,8 +730,7 @@ function saveGraphToLocalStorage() {
 
     // Sauvegarde dans le localStorage
     localStorage.setItem("graphData", JSON.stringify(graphData));
-    console.log("Graph saved to localStorage.");
-    console.log(graphData.foundActors);
+
     
     // Mettre à jour les statistiques après avoir sauvegardé
     updateStats();
@@ -700,10 +783,8 @@ function loadGraphFromLocalStorage() {
         updateFoundMoviesList();
         updateFoundActorsList();
 
-        console.log("Graph loaded from localStorage.");
-    } else {
-        console.log("No graph data found in localStorage.");
-    }
+   
+    } 
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -711,7 +792,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem("graphData")) {
         // Charge le graphe à partir du localStorage
         loadGraphFromLocalStorage();
-        console.log("LC")
     } else {
         // Si aucune donnée n'est trouvée, initialise un graphe de départ
         initializeGraph();
@@ -742,7 +822,14 @@ document.getElementById('reset-button').addEventListener('click', () => {
             // Réinitialisation des listes d'acteurs et de films dans l'interface
             updateFoundMoviesList(); // Mise à jour de la liste des films
             updateFoundActorsList(); // Mise à jour de la liste des acteurs
+            startTime = Date.now();
+            localStorage.setItem("startTime", startTime); // Mettre à jour dans localStorage
 
+            // Mettre à jour immédiatement l'affichage du chrono
+            updateChrono();
+
+            // Afficher à nouveau la div du chrono si elle est cachée
+            document.getElementById('chrono').style.display = 'block';
             // Mise à jour du graphe (efface tout)
             updateGraph();
 
@@ -755,9 +842,48 @@ document.getElementById('reset-button').addEventListener('click', () => {
     });
 });
 
+
+
+function resetGame() {
+    Swal.fire({
+        title: "Vous avez perdu !",
+        text: "Reccommencez une partie.",
+        icon: "warning",
+        confirmButtonText: "Oui, réinitialiser",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Suppression des données dans localStorage
+            localStorage.removeItem("graphData");
+
+            // Réinitialisation des ensembles de films et d'acteurs trouvés
+            foundMoviesSet.clear();
+            foundActorsSet.clear();
+
+            // Réinitialisation des nœuds et des liens
+            nodes = [];
+            links = [];
+
+            // Réinitialisation des listes d'acteurs et de films dans l'interface
+            updateFoundMoviesList(); 
+            updateFoundActorsList(); 
+
+            // Réinitialisation du chrono
+            resetChrono(); 
+
+            // Mise à jour du graphe (efface tout)
+            updateGraph();
+
+            // Initialiser avec un nouvel acteur aléatoire
+            initializeGraph();
+
+            // Notification de succès
+            Swal.fire("Réinitialisé !", "Le graphe a été réinitialisé.", "success");
+        }
+    });
+}
+
 // Modification de la fonction handleClick pour les acteurs et les films
-async function handleClick(event, d) {
-    console.log("Clicked node:", d);
+async function handleClick(event, d) {      
 
     const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 10); // Tronquer et masquer le label
 
@@ -803,9 +929,7 @@ async function handleClick(event, d) {
     }
 
     if (d.type === 'actor') {
-        console.log(`Fetching movies for actor: ${d.id}`);
         const actorData = await fetchData(`/api/actors/${d.id}/movies`);
-        console.log("Actor data:", actorData);
 
         Swal.fire({
             title: "Entrez le nom de l'acteur/actrice",
@@ -823,10 +947,10 @@ async function handleClick(event, d) {
             if (result.isConfirmed) {
                 const actorName = result.value;
                 if (actorName == d.label || actorName == 'a') {
-                    console.log("PASS");
                     // Marquer l'acteur comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
+                    resetChrono();
                     
                     // Ajouter l'acteur à la liste des acteurs trouvés
                     addActorToList(d.id, d.label);
@@ -842,14 +966,12 @@ async function handleClick(event, d) {
 
                     }
                 } else {
-                    Swal.fire(`ALed`);
+                    Swal.fire(`Mauvaise réponse`);
                 }
             }
         });
     } else if (d.type === 'movie') {
-        console.log(`Fetching actors for movie: ${d.id}`);
         const movieData = await fetchData(`/api/movies/${d.id}/actors`);
-        console.log("Movie data:", movieData);
 
         Swal.fire({
             title: "Entrez le nom du film",
@@ -870,7 +992,7 @@ async function handleClick(event, d) {
                     // Marquer le film comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
-                    
+                    resetChrono();
                     // Maintenant qu'on a trouvé le film, on l'ajoute à la liste
                     addMovieToList(d.id, d.label);
                     
@@ -885,7 +1007,7 @@ async function handleClick(event, d) {
 
                     }
                 } else {
-                    Swal.fire(`ALed`);
+                    Swal.fire(`Mauvaise réponse`);
                 }
             }
         });
@@ -942,4 +1064,44 @@ function cropImage(imageUrl, cropSize = 80) {
         img.onerror = () => reject("Erreur de chargement de l'image");
     });
 }
+let chronoInterval;
+const chronoDuration = 120 * 1000; // 60 secondes en millisecondes
+let startTime = localStorage.getItem("startTime") ? parseInt(localStorage.getItem("startTime")) : Date.now();
 
+// Fonction pour mettre à jour l'affichage du chrono
+function updateChrono() {
+    const elapsedTime = Date.now() - startTime;
+    let remainingTime = Math.max(chronoDuration - elapsedTime, 0);
+    let seconds = Math.floor(remainingTime / 1000);
+
+    document.getElementById('chrono').innerText = `Temps restant: ${seconds} s`;
+
+    if (remainingTime <= 0) {
+        clearInterval(chronoInterval);
+        Swal.fire("Perdu !", "Le temps est écoulé.", "error");
+        resetGame();
+    }
+}
+
+// Fonction pour démarrer le chrono
+function startChrono() {
+    clearInterval(chronoInterval); // Empêcher les doublons
+    updateChrono(); // Mettre à jour immédiatement
+    chronoInterval = setInterval(updateChrono, 1000);
+}
+
+// Fonction pour réinitialiser le chrono
+function resetChrono() {
+    clearInterval(chronoInterval);
+    startTime = Date.now();
+    localStorage.setItem("startTime", startTime);
+    startChrono();
+}
+
+// Démarrer le chrono dès le chargement de la page
+startChrono();
+
+// Sauvegarde du chrono avant de quitter la page
+window.addEventListener("beforeunload", () => {
+    localStorage.setItem("startTime", startTime);
+});
