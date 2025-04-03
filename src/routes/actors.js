@@ -2,7 +2,34 @@ const express = require('express');
 const router = express.Router();
 const { Movies, Actors, MoviesActor } = require('../sgbd/models.js');  // Assurez-vous que ces modèles sont correctement importés
 
-// Récupérer les films pour un acteur
+/**
+ * @swagger
+ * /api/actors/{id}/movies:
+ *   get:
+ *     summary: Récupérer les films d'un acteur
+ *     description: Récupère tous les films dans lesquels un acteur spécifique a joué
+ *     tags: [Acteurs]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Identifiant unique de l'acteur
+ *     responses:
+ *       200:
+ *         description: Détails de l'acteur avec la liste de ses films
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Actor'
+ *       400:
+ *         description: ID d'acteur invalide
+ *       404:
+ *         description: Acteur non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
 router.get('/api/actors/:id/movies', async (req, res) => {
     try {
         const actorId = req.params.id;
@@ -37,7 +64,36 @@ router.get('/api/actors/:id/movies', async (req, res) => {
     }
 });
 
-// Récupérer les acteurs pour un film
+/**
+ * @swagger
+ * /api/movies/{id}/actors:
+ *   get:
+ *     summary: Récupérer les acteurs d'un film
+ *     description: Récupère tous les acteurs qui ont joué dans un film spécifique
+ *     tags: [Films]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Identifiant unique du film
+ *     responses:
+ *       200:
+ *         description: Liste des acteurs ayant joué dans le film
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Actor'
+ *       400:
+ *         description: ID de film invalide
+ *       404:
+ *         description: Film non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
 router.get('/api/movies/:id/actors', async (req, res) => {
     try {
         const movieId = req.params.id;

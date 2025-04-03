@@ -3,7 +3,6 @@ const router = express.Router();
 const { Movies, Actors, MoviesActor, Genres, MoviesGenre } = require('../sgbd/models.js');
 const Sequelize = require('sequelize');
 
-// Route pour récupérer les statistiques de base (nombre total d'acteurs et de films)
 router.get('/api/stats', async (req, res) => {
     try {
         // Compter le nombre total d'acteurs dans la base de données

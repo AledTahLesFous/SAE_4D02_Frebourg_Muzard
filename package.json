@@ -25,6 +25,8 @@
     "express": "^4.21.2",
     "mariadb": "^3.4.0",
     "sequelize": "^6.37.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "sweetalert2": "^11.17.2",
     "three": "^0.175.0",
     "wikipedia": "^2.1.2"

@@ -4,7 +4,25 @@ const { Actors } = require('../sgbd/models.js');
 const { QueryTypes } = require('sequelize');
 const myDB = require('../sgbd/config.js');
 
-// Route pour récupérer un acteur aléatoire
+/**
+ * @swagger
+ * /api/actors/random:
+ *   get:
+ *     summary: Récupérer un acteur aléatoire
+ *     description: Renvoie un acteur sélectionné aléatoirement dans la base de données
+ *     tags: [Acteurs]
+ *     responses:
+ *       200:
+ *         description: Un acteur aléatoire
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Actor'
+ *       404:
+ *         description: Aucun acteur trouvé dans la base de données
+ *       500:
+ *         description: Erreur serveur
+ */
 router.get('/api/actors/random', async (req, res) => {
     try {
         // Utilisation de la fonction RAND() de SQL pour sélectionner un acteur aléatoire

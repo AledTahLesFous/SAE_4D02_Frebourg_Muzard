@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const path = require("path");  // Nécessaire pour gérer les chemins de fichiers
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./src/swagger/swagger.js');
 
 const myDB = require("./src/sgbd/config.js");
 require("./src/sgbd/models.js");
@@ -34,6 +36,9 @@ app.use("/", movieRouter); // Use the movie router for routes under "/movies"
 app.use("/", wikipediaRoutes);
 app.use("/", randomActorRoutes); // Utilisation des routes pour acteur aléatoire
 app.use("/", statsRoutes); // Utilisation des routes pour les statistiques
+
+// Configuration de Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, { explorer: true }));
 
 const PORT = process.env.PORT || 3000;
 
