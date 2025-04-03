@@ -1065,7 +1065,7 @@ function cropImage(imageUrl, cropSize = 80) {
     });
 }
 let chronoInterval;
-const chronoDuration = 120 * 1000; // 60 secondes en millisecondes
+const chronoDuration = 120 * 1000; // 120 secondes (2 minutes) en millisecondes
 let startTime = localStorage.getItem("startTime") ? parseInt(localStorage.getItem("startTime")) : Date.now();
 
 // Fonction pour mettre à jour l'affichage du chrono
@@ -1073,12 +1073,29 @@ function updateChrono() {
     const elapsedTime = Date.now() - startTime;
     let remainingTime = Math.max(chronoDuration - elapsedTime, 0);
     let seconds = Math.floor(remainingTime / 1000);
+    let minutes = Math.floor(seconds / 60);
+    seconds = seconds % 60;
 
-    document.getElementById('chrono').innerText = `Temps restant: ${seconds} s`;
+    // Format minutes:seconds
+    const timeDisplay = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+    document.getElementById('chrono').innerHTML = `<strong>Temps restant:</strong> ${timeDisplay}`;
+
+    // Changer la couleur en fonction du temps restant
+    const chronoElement = document.getElementById('chrono');
+    if (remainingTime <= 30000) { // Moins de 30 secondes
+        chronoElement.style.backgroundColor = '#ff6b6b'; // Rouge
+        chronoElement.style.color = 'white';
+    } else if (remainingTime <= 60000) { // Moins de 60 secondes
+        chronoElement.style.backgroundColor = '#feca57'; // Jaune
+        chronoElement.style.color = 'black';
+    } else {
+        chronoElement.style.backgroundColor = '#1dd1a1'; // Vert
+        chronoElement.style.color = 'white';
+    }
 
     if (remainingTime <= 0) {
         clearInterval(chronoInterval);
-        Swal.fire("Perdu !", "Le temps est écoulé.", "error");
+        Swal.fire("Temps écoulé !", "Vous n'avez pas trouvé assez d'acteurs ou de films à temps.", "error");
         resetGame();
     }
 }
