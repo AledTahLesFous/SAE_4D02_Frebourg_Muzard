@@ -1,3 +1,4 @@
+
 // Création du SVG
 const width = 800, height = 600;
 const svg = d3.select("#graph")
@@ -1121,4 +1122,75 @@ startChrono();
 // Sauvegarde du chrono avant de quitter la page
 window.addEventListener("beforeunload", () => {
     localStorage.setItem("startTime", startTime);
+});
+// Liste de termes de recherche (20 termes comme suggéré)
+const searchTerms = [
+    "excited", "funny", "dog", "cat", "happy", "angry", "meme", "fail", "surprised",
+    "love", "laugh", "reaction", "dance", "cool", "success", "party", "joke", "celebrate",
+    "confused", "shocked", "awesome"
+];
+
+// Fonction pour obtenir un terme aléatoire
+function getRandomSearchTerm() {
+    const randomIndex = Math.floor(Math.random() * searchTerms.length);
+    return searchTerms[randomIndex];
+}
+
+// Fonction pour effectuer une requête GET asynchrone
+function httpGetAsync(theUrl, callback) {
+    // Créer l'objet de requête
+    var xmlHttp = new XMLHttpRequest();
+
+    // Définir le callback de changement d'état pour traiter la réponse
+    xmlHttp.onreadystatechange = function() {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            callback(xmlHttp.responseText);  // Appeler la fonction callback en passant la réponse
+        }
+    };
+
+    // Ouvrir la requête GET
+    xmlHttp.open("GET", theUrl, true);
+
+    // Envoyer la requête sans paramètres supplémentaires
+    xmlHttp.send(null);
+}
+
+// Fonction de traitement de la réponse pour récupérer et afficher le GIF de prévisualisation
+function tenorCallback_search(responsetext) {
+    // Analyser la réponse JSON
+    var response_objects = JSON.parse(responsetext);
+
+    const top_10_gifs = response_objects["results"];  // Récupérer les 10 premiers GIFs
+
+    // Vérifier si l'élément existe avant de le modifier
+    const previewGifElement = document.getElementById("preview_gif");
+
+    if (previewGifElement && top_10_gifs.length > 0) {
+        // Afficher le premier GIF dans l'élément d'ID "preview_gif" (taille prévisualisation)
+        previewGifElement.src = top_10_gifs[0]["media_formats"]["nanogif"]["url"];
+    }
+}
+
+// Fonction pour appeler l'API Tenor et obtenir les GIFs avec un terme de recherche aléatoire
+function grab_data() {
+    // Définir la clé API et la limite du nombre de résultats
+    var apikey = "AIzaSyDtY-zN-522TH8vpgQrUiICrWA--l0dokk";
+    var clientkey = "my_test_app";  // Définir ton client_key pour l'API Tenor
+    var lmt = 8;  // Limite du nombre de GIFs à récupérer
+
+    // Sélectionner un terme de recherche aléatoire
+    var search_term = getRandomSearchTerm();
+
+    // Créer l'URL de recherche avec le terme aléatoire
+    var search_url = "https://tenor.googleapis.com/v2/search?q=" + search_term + "&key=" +
+        apikey + "&client_key=" + clientkey + "&limit=" + lmt;
+
+    // Faire la requête asynchrone pour récupérer les GIFs
+    httpGetAsync(search_url, tenorCallback_search);
+}
+
+// Attendre que le DOM soit complètement chargé avant de commencer
+document.addEventListener("DOMContentLoaded", function() {
+    // Lancer la recherche au démarrage
+    grab_data();
 });
