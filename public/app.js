@@ -847,6 +847,46 @@ document.getElementById('reset-button').addEventListener('click', () => {
     });
 });
 
+
+
+function resetGame() {
+    Swal.fire({
+        title: "Vous avez perdu !",
+        text: "Reccommencez une partie.",
+        icon: "warning",
+        confirmButtonText: "Oui, réinitialiser",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Suppression des données dans localStorage
+            localStorage.removeItem("graphData");
+
+            // Réinitialisation des ensembles de films et d'acteurs trouvés
+            foundMoviesSet.clear();
+            foundActorsSet.clear();
+
+            // Réinitialisation des nœuds et des liens
+            nodes = [];
+            links = [];
+
+            // Réinitialisation des listes d'acteurs et de films dans l'interface
+            updateFoundMoviesList(); 
+            updateFoundActorsList(); 
+
+            // Réinitialisation du chrono
+            resetChrono(); 
+
+            // Mise à jour du graphe (efface tout)
+            updateGraph();
+
+            // Initialiser avec un nouvel acteur aléatoire
+            initializeGraph();
+
+            // Notification de succès
+            Swal.fire("Réinitialisé !", "Le graphe a été réinitialisé.", "success");
+        }
+    });
+}
+
 // Modification de la fonction handleClick pour les acteurs et les films
 async function handleClick(event, d) {
     console.log("Clicked node:", d);
@@ -919,6 +959,7 @@ async function handleClick(event, d) {
                     // Marquer l'acteur comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
+                    resetChrono();
                     
                     // Ajouter l'acteur à la liste des acteurs trouvés
                     addActorToList(d.id, d.label);
@@ -962,7 +1003,7 @@ async function handleClick(event, d) {
                     // Marquer le film comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
-                    
+                    resetChrono();
                     // Maintenant qu'on a trouvé le film, on l'ajoute à la liste
                     addMovieToList(d.id, d.label);
                     
@@ -1034,32 +1075,44 @@ function cropImage(imageUrl, cropSize = 80) {
         img.onerror = () => reject("Erreur de chargement de l'image");
     });
 }
+let chronoInterval;
+const chronoDuration = 120 * 1000; // 60 secondes en millisecondes
+let startTime = localStorage.getItem("startTime") ? parseInt(localStorage.getItem("startTime")) : Date.now();
 
-
-let savedTime = localStorage.getItem("startTime");
-let startTime;
-
-// Si aucune valeur n'est sauvegardée, démarrer un nouveau chrono
-if (!savedTime) {
-    startTime = Date.now();
-    localStorage.setItem("startTime", startTime); // Sauvegarder l'heure de départ
-} else {
-    startTime = parseInt(savedTime); // Récupérer l'heure de départ sauvegardée
-}
-
-// Fonction pour mettre à jour le chrono
+// Fonction pour mettre à jour l'affichage du chrono
 function updateChrono() {
-    const elapsedTime = Date.now() - startTime; // Temps écoulé en millisecondes
-    const seconds = Math.floor(elapsedTime / 1000); // Convertir en secondes
+    const elapsedTime = Date.now() - startTime;
+    let remainingTime = Math.max(chronoDuration - elapsedTime, 0);
+    let seconds = Math.floor(remainingTime / 1000);
 
-    // Afficher les secondes dans l'élément HTML avec l'ID "chrono"
-    document.getElementById('chrono').innerText = `Chrono: ${seconds} s`;
+    document.getElementById('chrono').innerText = `Temps restant: ${seconds} s`;
+
+    if (remainingTime <= 0) {
+        clearInterval(chronoInterval);
+        Swal.fire("Perdu !", "Le temps est écoulé.", "error");
+        resetGame();
+    }
 }
 
-// Démarrer le chrono en appelant la fonction updateChrono chaque seconde
-setInterval(updateChrono, 1000);
+// Fonction pour démarrer le chrono
+function startChrono() {
+    clearInterval(chronoInterval); // Empêcher les doublons
+    updateChrono(); // Mettre à jour immédiatement
+    chronoInterval = setInterval(updateChrono, 1000);
+}
 
-// Sauvegarder le temps de départ lorsque la page est fermée ou rechargée
+// Fonction pour réinitialiser le chrono
+function resetChrono() {
+    clearInterval(chronoInterval);
+    startTime = Date.now();
+    localStorage.setItem("startTime", startTime);
+    startChrono();
+}
+
+// Démarrer le chrono dès le chargement de la page
+startChrono();
+
+// Sauvegarde du chrono avant de quitter la page
 window.addEventListener("beforeunload", () => {
-    localStorage.setItem("startTime", startTime); // Sauvegarder l'heure de départ
+    localStorage.setItem("startTime", startTime);
 });
