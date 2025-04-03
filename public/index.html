@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actor Movie Graph</title>
+    <title>Cinememe</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,6 +19,31 @@
             text-align: center;
             margin: 20px 0;
             color: #333;
+        }
+        
+        /* Style pour le chronomètre */
+        #chrono {
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            padding: 15px;
+            margin: 0 auto 20px;
+            max-width: 300px;
+            border-radius: 10px;
+            position: relative;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        #chrono::before {
+            content: "\f2f2";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            margin-right: 10px;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
         }
 
         .main-container {
@@ -266,12 +292,41 @@
             margin-top: 15px;
             margin-bottom: 5px;
         }
+        #chrono-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        #chrono {
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            padding: 15px;
+            margin: 0;
+            max-width: 300px;
+            border-radius: 10px;
+            position: relative;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        #preview_gif {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+        
+        #meme-container {
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
-    <h1>Actor and Movies Graph</h1>
-    <div id="chrono" style="display: block;">Temps restant: 0s</div>
-
+    <h1>Cinememe</h1>
+    <div id="chrono-container">
+        <div id="chrono"><i class="fas fa-stopwatch"></i> Temps restant: 0s</div>
+    </div>
     <div class="main-container">
         <!-- Panneau de statistiques (gauche) -->
         <div id="stats-panel">
@@ -349,6 +404,10 @@
                 </ul>
                 <h3>Acteurs trouvés</h3>
                 <ul id="found-actors"></ul>
+                
+                <div id="meme-container">
+                    <img id="preview_gif" alt="Meme preview" />
+                </div>
             </div>
         </div>
     </div>

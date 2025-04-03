@@ -3,7 +3,34 @@ const router = express.Router();
 const { Movies, Actors } = require('../sgbd/models.js');
 const { Op } = require('sequelize');
 
-// Route pour rechercher des acteurs
+/**
+ * @swagger
+ * /api/search/actors:
+ *   get:
+ *     summary: Recherche des acteurs par nom
+ *     description: Recherche des acteurs dont le nom contient la chaîne de caractères spécifiée
+ *     tags: [Recherche]
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Terme de recherche pour les noms d'acteurs
+ *     responses:
+ *       200:
+ *         description: Liste des acteurs correspondant à la recherche
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Actor'
+ *       400:
+ *         description: Paramètre de recherche manquant
+ *       500:
+ *         description: Erreur serveur
+ */
 router.get('/api/search/actors', async (req, res) => {
     try {
         const query = req.query.query;
@@ -27,7 +54,34 @@ router.get('/api/search/actors', async (req, res) => {
     }
 });
 
-// Route pour rechercher des films
+/**
+ * @swagger
+ * /api/search/movies:
+ *   get:
+ *     summary: Recherche des films par titre
+ *     description: Recherche des films dont le titre contient la chaîne de caractères spécifiée
+ *     tags: [Recherche]
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Terme de recherche pour les titres de films
+ *     responses:
+ *       200:
+ *         description: Liste des films correspondant à la recherche
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Movie'
+ *       400:
+ *         description: Paramètre de recherche manquant
+ *       500:
+ *         description: Erreur serveur
+ */
 router.get('/api/search/movies', async (req, res) => {
     try {
         const query = req.query.query;

@@ -1,3 +1,4 @@
+
 // Création du SVG
 const width = 800, height = 600;
 const svg = d3.select("#graph")
@@ -947,6 +948,8 @@ async function handleClick(event, d) {
             if (result.isConfirmed) {
                 const actorName = result.value;
                 if (actorName == d.label || actorName == 'a') {
+                    grab_data();
+
                     // Marquer l'acteur comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
@@ -989,6 +992,7 @@ async function handleClick(event, d) {
             if (result.isConfirmed) {
                 const movieName = result.value;
                 if (movieName == d.label || movieName == "a") {
+                    grab_data();
                     // Marquer le film comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
@@ -1065,7 +1069,7 @@ function cropImage(imageUrl, cropSize = 80) {
     });
 }
 let chronoInterval;
-const chronoDuration = 120 * 1000; // 60 secondes en millisecondes
+const chronoDuration = 120 * 1000; // 120 secondes (2 minutes) en millisecondes
 let startTime = localStorage.getItem("startTime") ? parseInt(localStorage.getItem("startTime")) : Date.now();
 
 // Fonction pour mettre à jour l'affichage du chrono
@@ -1073,12 +1077,29 @@ function updateChrono() {
     const elapsedTime = Date.now() - startTime;
     let remainingTime = Math.max(chronoDuration - elapsedTime, 0);
     let seconds = Math.floor(remainingTime / 1000);
+    let minutes = Math.floor(seconds / 60);
+    seconds = seconds % 60;
 
-    document.getElementById('chrono').innerText = `Temps restant: ${seconds} s`;
+    // Format minutes:seconds
+    const timeDisplay = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+    document.getElementById('chrono').innerHTML = `<strong>Temps restant:</strong> ${timeDisplay}`;
+
+    // Changer la couleur en fonction du temps restant
+    const chronoElement = document.getElementById('chrono');
+    if (remainingTime <= 30000) { // Moins de 30 secondes
+        chronoElement.style.backgroundColor = '#ff6b6b'; // Rouge
+        chronoElement.style.color = 'white';
+    } else if (remainingTime <= 60000) { // Moins de 60 secondes
+        chronoElement.style.backgroundColor = '#feca57'; // Jaune
+        chronoElement.style.color = 'black';
+    } else {
+        chronoElement.style.backgroundColor = '#1dd1a1'; // Vert
+        chronoElement.style.color = 'white';
+    }
 
     if (remainingTime <= 0) {
         clearInterval(chronoInterval);
-        Swal.fire("Perdu !", "Le temps est écoulé.", "error");
+        Swal.fire("Temps écoulé !", "Vous n'avez pas trouvé assez d'acteurs ou de films à temps.", "error");
         resetGame();
     }
 }
@@ -1104,4 +1125,75 @@ startChrono();
 // Sauvegarde du chrono avant de quitter la page
 window.addEventListener("beforeunload", () => {
     localStorage.setItem("startTime", startTime);
+});
+// Liste de termes de recherche (20 termes comme suggéré)
+const searchTerms = [
+    "excited", "funny", "dog", "cat", "happy", "angry", "meme", "fail", "surprised",
+    "love", "laugh", "reaction", "dance", "cool", "success", "party", "joke", "celebrate",
+    "confused", "shocked", "awesome"
+];
+
+// Fonction pour obtenir un terme aléatoire
+function getRandomSearchTerm() {
+    const randomIndex = Math.floor(Math.random() * searchTerms.length);
+    return searchTerms[randomIndex];
+}
+
+// Fonction pour effectuer une requête GET asynchrone
+function httpGetAsync(theUrl, callback) {
+    // Créer l'objet de requête
+    var xmlHttp = new XMLHttpRequest();
+
+    // Définir le callback de changement d'état pour traiter la réponse
+    xmlHttp.onreadystatechange = function() {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            callback(xmlHttp.responseText);  // Appeler la fonction callback en passant la réponse
+        }
+    };
+
+    // Ouvrir la requête GET
+    xmlHttp.open("GET", theUrl, true);
+
+    // Envoyer la requête sans paramètres supplémentaires
+    xmlHttp.send(null);
+}
+
+// Fonction de traitement de la réponse pour récupérer et afficher le GIF de prévisualisation
+function tenorCallback_search(responsetext) {
+    // Analyser la réponse JSON
+    var response_objects = JSON.parse(responsetext);
+
+    const top_10_gifs = response_objects["results"];  // Récupérer les 10 premiers GIFs
+
+    // Vérifier si l'élément existe avant de le modifier
+    const previewGifElement = document.getElementById("preview_gif");
+
+    if (previewGifElement && top_10_gifs.length > 0) {
+        // Afficher le premier GIF dans l'élément d'ID "preview_gif" (taille prévisualisation)
+        previewGifElement.src = top_10_gifs[0]["media_formats"]["nanogif"]["url"];
+    }
+}
+
+// Fonction pour appeler l'API Tenor et obtenir les GIFs avec un terme de recherche aléatoire
+function grab_data() {
+    // Définir la clé API et la limite du nombre de résultats
+    var apikey = "AIzaSyDtY-zN-522TH8vpgQrUiICrWA--l0dokk";
+    var clientkey = "my_test_app";  // Définir ton client_key pour l'API Tenor
+    var lmt = 8;  // Limite du nombre de GIFs à récupérer
+
+    // Sélectionner un terme de recherche aléatoire
+    var search_term = getRandomSearchTerm();
+
+    // Créer l'URL de recherche avec le terme aléatoire
+    var search_url = "https://tenor.googleapis.com/v2/search?q=" + search_term + "&key=" +
+        apikey + "&client_key=" + clientkey + "&limit=" + lmt;
+
+    // Faire la requête asynchrone pour récupérer les GIFs
+    httpGetAsync(search_url, tenorCallback_search);
+}
+
+// Attendre que le DOM soit complètement chargé avant de commencer
+document.addEventListener("DOMContentLoaded", function() {
+    // Lancer la recherche au démarrage
+    grab_data();
 });
