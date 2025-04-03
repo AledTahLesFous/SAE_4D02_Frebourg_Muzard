@@ -200,7 +200,6 @@ function ticked() {
 
 async function getWikipediaInfo(title, type) {
     try {
-        console.log(`Recherche d'informations pour ${title} (type: ${type})`);
         
         // URL complète
         const response = await fetch(`/api/wikipedia?title=${encodeURIComponent(title)}&type=${type}`);
@@ -731,8 +730,7 @@ function saveGraphToLocalStorage() {
 
     // Sauvegarde dans le localStorage
     localStorage.setItem("graphData", JSON.stringify(graphData));
-    console.log("Graph saved to localStorage.");
-    console.log(graphData.foundActors);
+
     
     // Mettre à jour les statistiques après avoir sauvegardé
     updateStats();
@@ -785,10 +783,8 @@ function loadGraphFromLocalStorage() {
         updateFoundMoviesList();
         updateFoundActorsList();
 
-        console.log("Graph loaded from localStorage.");
-    } else {
-        console.log("No graph data found in localStorage.");
-    }
+   
+    } 
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -796,7 +792,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem("graphData")) {
         // Charge le graphe à partir du localStorage
         loadGraphFromLocalStorage();
-        console.log("LC")
     } else {
         // Si aucune donnée n'est trouvée, initialise un graphe de départ
         initializeGraph();
@@ -888,8 +883,7 @@ function resetGame() {
 }
 
 // Modification de la fonction handleClick pour les acteurs et les films
-async function handleClick(event, d) {
-    console.log("Clicked node:", d);
+async function handleClick(event, d) {      
 
     const truncatedMaskedLabel = truncateAndMaskLabel(d.label, 10); // Tronquer et masquer le label
 
@@ -935,9 +929,7 @@ async function handleClick(event, d) {
     }
 
     if (d.type === 'actor') {
-        console.log(`Fetching movies for actor: ${d.id}`);
         const actorData = await fetchData(`/api/actors/${d.id}/movies`);
-        console.log("Actor data:", actorData);
 
         Swal.fire({
             title: "Entrez le nom de l'acteur/actrice",
@@ -955,7 +947,6 @@ async function handleClick(event, d) {
             if (result.isConfirmed) {
                 const actorName = result.value;
                 if (actorName == d.label || actorName == 'a') {
-                    console.log("PASS");
                     // Marquer l'acteur comme trouvé
                     d.found = true;
                     updateText(d.id, d.label);
@@ -975,14 +966,12 @@ async function handleClick(event, d) {
 
                     }
                 } else {
-                    Swal.fire(`ALed`);
+                    Swal.fire(`Mauvaise réponse`);
                 }
             }
         });
     } else if (d.type === 'movie') {
-        console.log(`Fetching actors for movie: ${d.id}`);
         const movieData = await fetchData(`/api/movies/${d.id}/actors`);
-        console.log("Movie data:", movieData);
 
         Swal.fire({
             title: "Entrez le nom du film",
@@ -1018,7 +1007,7 @@ async function handleClick(event, d) {
 
                     }
                 } else {
-                    Swal.fire(`ALed`);
+                    Swal.fire(`Mauvaise réponse`);
                 }
             }
         });

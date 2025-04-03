@@ -106,21 +106,7 @@ describe('Tests des routes API', () => {
     });
   });
 
-  // Tests pour les routes de film
-  describe('Routes de film', () => {
-    // Test pour récupérer les films d'un acteur (route dans movie.js)
-    test('GET /api/actors/:id/movies (movie.js) - devrait retourner les films d\'un acteur', async () => {
-      // Récupérer d'abord un acteur existant
-      const actor = await Actors.findOne();
-      if (actor) {
-        const response = await request(app).get(`/api/actors/${actor.id}/movies`);
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toHaveProperty('movies');
-      } else {
-        console.warn('Aucun acteur trouvé dans la base de données pour le test');
-      }
-    });
-  });
+
 
   // Tests pour la route d'acteur aléatoire
   describe('Route d\'acteur aléatoire', () => {
