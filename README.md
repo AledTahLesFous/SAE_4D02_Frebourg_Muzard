@@ -1,14 +1,32 @@
-- random
-- trouver acteurs/films
-- doc swagger
-- tests api
-- graph interactif
-- formulaire pour trouver
-- localstorage
-- api wikipedia photos
-- lier bdd CHECK
+La structure devrait ressembler a ca : 
 
-- fonctionalites:
-	- three js
-	- cubes
+/sae
+    /nodes_modules
+        -*tout les modules*
+    /public
+        /image
+            logo.png
+        app.js
+        index.html
+    /src
+        /routes
+            actors.js
+            movie.js
+            randomActor.js
+            recherche.js
+            stats.js
+            wikipedia.js
+        /swagger
+            swagger.js
+        /sgbd
+            config.js
+            models.js
+    /tests
+        api.test.js
+        jest.config.js
+    .env
+    index.js
+    package.json
+    package-lock.json
 
+Pour les memes, la clé API est dans le app.js et donc accessible a tous....
